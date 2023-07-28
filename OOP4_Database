@@ -1,0 +1,234 @@
+using System.Numerics;
+
+namespace OOP3PlayersDatabase
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            const string AddPlayerCommand = "1";
+            const string RemovePlayerCommand = "2";
+            const string ChangeBanStatusCommand = "3";
+            const string ExitCommand = "4";
+
+            bool isWork = true;
+
+            int maxID = 0;
+
+            Database database = new Database();
+
+            while (isWork)
+            {
+                database.ShowBase();
+
+                Console.SetCursorPosition(0, 0);
+                Console.WriteLine($"Ведите номер команды:" +
+                    $"\n\t{AddPlayerCommand} - добавить игрока." +
+                    $"\n\t{RemovePlayerCommand} - удалить игрока по ID." +
+                    $"\n\t{ChangeBanStatusCommand} - изменить статус бана игрока по ID." +
+                    $"\n\t{ExitCommand} - выход из программы.");
+
+                string userInput = Console.ReadLine();
+
+                switch (userInput)
+                {
+                    case AddPlayerCommand:
+                        database.AddPlayer(ref maxID);
+                    break;
+
+                    case RemovePlayerCommand:
+                        database.RemovePlayer();
+                    break;
+
+                    case ChangeBanStatusCommand:
+                        database.ChangeBanStatus();
+                    break;
+
+                    case ExitCommand:
+                        isWork = false;
+                        break;
+
+                    default:
+                        Console.WriteLine("Некорректная команда");
+                        break;
+                }
+
+                Console.ReadLine();
+                Console.Clear();
+            }
+        }
+    }
+
+    class Player
+    {
+        public string Nickname { get; private set; }
+        public int ID { get; set; }
+        public int Level { get; private set; }
+        public bool IsBanned { get; private set; }
+
+        public Player(string nickname, int id, int level = 1, bool isBanned = false)
+        {
+            Nickname = nickname;
+            ID = id;
+            Level = level;
+            IsBanned = isBanned;
+        }
+
+        public void ShowInfo()
+        {
+            Console.Write($"{Nickname} / id {ID} / level {Level} / ");
+
+            ShowBanStatus();
+        }
+
+        private void ShowBanStatus()
+        {
+            if (IsBanned) 
+            {
+                Console.WriteLine("Banned");
+            }
+            else
+            {
+                Console.WriteLine("Can Play");
+            }
+        }
+
+        public bool Unban()
+        {
+            IsBanned = false;           
+            return IsBanned;
+        }
+
+        public bool Ban()
+        {
+            IsBanned = true;
+            return IsBanned;
+        }
+    }
+
+    class Database
+    {
+        private List<Player> _playersList = new List<Player>();
+
+        public void AddPlayer(ref int maxID)
+        {
+            Console.WriteLine("Добавить игрока.");
+            string inputNickname = GetUserInput("Введите ник нового игрока: ");
+
+            if (inputNickname != "")
+            {
+                int newId = maxID + 1;
+
+                Player player = new Player(inputNickname, newId);
+
+                _playersList.Add(player);
+
+                maxID = newId;
+                
+                Console.WriteLine("Добавлен игрок:\n");
+
+                player.ShowInfo();
+            }
+            else
+            {
+                Console.WriteLine("некорректный ник!");
+            }
+        }
+
+        public void RemovePlayer() 
+        {
+            Console.WriteLine("Удалить игрока по ID.");
+
+            int playerIndex = FindPlayerIndex();
+
+            if (playerIndex != -1)
+            {
+                Console.WriteLine("Удаляется игрок:");
+
+                _playersList[playerIndex].ShowInfo();
+
+                _playersList.RemoveAt(playerIndex);
+            }                                       
+        }
+
+        public void ChangeBanStatus()
+        {
+            Console.WriteLine("Изменить статус бана игрока по ID.");
+
+            int playerIndex = FindPlayerIndex();
+           
+            if (playerIndex != -1)
+            {
+                if (_playersList[playerIndex].IsBanned)
+                {
+                    _playersList[playerIndex].Unban();
+                }
+                else
+                {
+                    _playersList[playerIndex].Ban();
+                }
+
+                _playersList[playerIndex].ShowInfo();
+            }                          
+        }
+
+        private int GetID()
+        {
+            bool isNumber = false;
+            int parsedNumber = 0;
+
+            while (isNumber == false)
+            {
+                string userInput = GetUserInput("Введите ID: ");
+
+                isNumber = int.TryParse(userInput, out parsedNumber);
+            }
+
+            return parsedNumber;
+        }
+
+        private int FindPlayerIndex()
+        {
+            int requestedPlayerID = GetID();
+
+            bool indexIsFound = false;
+
+            for (int i = 0; i < _playersList.Count; i++)
+            {
+                if (_playersList[i].ID == requestedPlayerID)
+                {
+                    indexIsFound = true;
+                    return i;
+                }
+            }
+
+            if (indexIsFound == false)
+            {
+                Console.WriteLine("игрок под этим ID отсутствует.");
+            }
+
+            return -1;
+        }
+
+        public void ShowBase()
+        {
+            int databasePositionX = 60;
+            Console.SetCursorPosition(databasePositionX, 0);
+            Console.WriteLine("База данных игроков:");
+
+            for (int i = 0; i < _playersList.Count; i++)
+            {
+                Console.SetCursorPosition(databasePositionX, i+1);
+
+                _playersList[i].ShowInfo();
+            }
+        }
+
+        private string GetUserInput(string inputRequest)
+        {
+            Console.Write(inputRequest);
+            string userInput = Console.ReadLine();
+            return userInput;
+        }
+    }
+}
