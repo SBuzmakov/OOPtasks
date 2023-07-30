@@ -61,11 +61,6 @@ namespace OOP3PlayersDatabase
 
     class Player
     {
-        public string Nickname { get; private set; }
-        public int ID { get; set; }
-        public int Level { get; private set; }
-        public bool IsBanned { get; private set; }
-
         public Player(string nickname, int id, int level = 1, bool isBanned = false)
         {
             Nickname = nickname;
@@ -74,11 +69,29 @@ namespace OOP3PlayersDatabase
             IsBanned = isBanned;
         }
 
+        public string Nickname { get; private set; }
+        public int ID { get; set; }
+        public int Level { get; private set; }
+        public bool IsBanned { get; private set; }
+
         public void ShowInfo()
         {
             Console.Write($"{Nickname} / id {ID} / level {Level} / ");
 
             ShowBanStatus();
+        }
+
+
+        public bool Unban()
+        {
+            IsBanned = false;           
+            return IsBanned;
+        }
+
+        public bool Ban()
+        {
+            IsBanned = true;
+            return IsBanned;
         }
 
         private void ShowBanStatus()
@@ -92,23 +105,25 @@ namespace OOP3PlayersDatabase
                 Console.WriteLine("Can Play");
             }
         }
-
-        public bool Unban()
-        {
-            IsBanned = false;           
-            return IsBanned;
-        }
-
-        public bool Ban()
-        {
-            IsBanned = true;
-            return IsBanned;
-        }
     }
 
     class Database
     {
         private List<Player> _playersList = new List<Player>();
+
+        public void ShowBase()
+        {
+            int databasePositionX = 60;
+            Console.SetCursorPosition(databasePositionX, 0);
+            Console.WriteLine("База данных игроков:");
+
+            for (int i = 0; i < _playersList.Count; i++)
+            {
+                Console.SetCursorPosition(databasePositionX, i + 1);
+
+                _playersList[i].ShowInfo();
+            }
+        }
 
         public void AddPlayer(ref int maxID)
         {
@@ -137,11 +152,13 @@ namespace OOP3PlayersDatabase
 
         public void RemovePlayer() 
         {
+            int playerIndex = 0;
+
             Console.WriteLine("Удалить игрока по ID.");
 
-            int playerIndex = FindPlayerIndex();
+            bool isPlayerIndexFound = FindPlayerIndex(out playerIndex);
 
-            if (playerIndex != -1)
+            if (isPlayerIndexFound)
             {
                 Console.WriteLine("Удаляется игрок:");
 
@@ -153,11 +170,13 @@ namespace OOP3PlayersDatabase
 
         public void ChangeBanStatus()
         {
+            int playerIndex = 0;
+
             Console.WriteLine("Изменить статус бана игрока по ID.");
 
-            int playerIndex = FindPlayerIndex();
+            bool isPlayerIndexFound = FindPlayerIndex(out playerIndex);
            
-            if (playerIndex != -1)
+            if (isPlayerIndexFound)
             {
                 if (_playersList[playerIndex].IsBanned)
                 {
@@ -187,8 +206,10 @@ namespace OOP3PlayersDatabase
             return parsedNumber;
         }
 
-        private int FindPlayerIndex()
+        private bool FindPlayerIndex(out int playerIndex)
         {
+            playerIndex = 0;
+
             int requestedPlayerID = GetID();
 
             bool indexIsFound = false;
@@ -197,8 +218,9 @@ namespace OOP3PlayersDatabase
             {
                 if (_playersList[i].ID == requestedPlayerID)
                 {
+                    playerIndex = i;
                     indexIsFound = true;
-                    return i;
+                    return indexIsFound;
                 }
             }
 
@@ -207,21 +229,7 @@ namespace OOP3PlayersDatabase
                 Console.WriteLine("игрок под этим ID отсутствует.");
             }
 
-            return -1;
-        }
-
-        public void ShowBase()
-        {
-            int databasePositionX = 60;
-            Console.SetCursorPosition(databasePositionX, 0);
-            Console.WriteLine("База данных игроков:");
-
-            for (int i = 0; i < _playersList.Count; i++)
-            {
-                Console.SetCursorPosition(databasePositionX, i+1);
-
-                _playersList[i].ShowInfo();
-            }
+            return false;
         }
 
         private string GetUserInput(string inputRequest)
