@@ -13,8 +13,6 @@ namespace OOP3PlayersDatabase
 
             bool isWork = true;
 
-            int maxID = 0;
-
             Database database = new Database();
 
             while (isWork)
@@ -33,7 +31,7 @@ namespace OOP3PlayersDatabase
                 switch (userInput)
                 {
                     case AddPlayerCommand:
-                        database.AddPlayer(ref maxID);
+                        database.AddPlayer();
                     break;
 
                     case RemovePlayerCommand:
@@ -81,7 +79,6 @@ namespace OOP3PlayersDatabase
             ShowBanStatus();
         }
 
-
         public bool Unban()
         {
             IsBanned = false;           
@@ -109,36 +106,35 @@ namespace OOP3PlayersDatabase
 
     class Database
     {
+        private int _currentMaxID = 0;
         private List<Player> _playersList = new List<Player>();
 
         public void ShowBase()
         {
-            int databasePositionX = 60;
-            Console.SetCursorPosition(databasePositionX, 0);
+            int positionX = 60;
+            Console.SetCursorPosition(positionX, 0);
             Console.WriteLine("База данных игроков:");
 
             for (int i = 0; i < _playersList.Count; i++)
             {
-                Console.SetCursorPosition(databasePositionX, i + 1);
+                Console.SetCursorPosition(positionX, i + 1);
 
                 _playersList[i].ShowInfo();
             }
         }
 
-        public void AddPlayer(ref int maxID)
+        public void AddPlayer()
         {
             Console.WriteLine("Добавить игрока.");
             string inputNickname = GetUserInput("Введите ник нового игрока: ");
 
             if (inputNickname != "")
             {
-                int newId = maxID + 1;
-
-                Player player = new Player(inputNickname, newId);
+                Player player = new Player(inputNickname, _currentMaxID);
 
                 _playersList.Add(player);
 
-                maxID = newId;
+                _currentMaxID = GetNewID();
                 
                 Console.WriteLine("Добавлен игрок:\n");
 
@@ -191,6 +187,12 @@ namespace OOP3PlayersDatabase
             }                          
         }
 
+        private int GetNewID()
+        {
+            _currentMaxID++;
+            return _currentMaxID;
+        }
+
         private int GetID()
         {
             bool isNumber = false;
@@ -209,10 +211,9 @@ namespace OOP3PlayersDatabase
         private bool FindPlayerIndex(out int playerIndex)
         {
             playerIndex = 0;
+            bool indexIsFound = false;
 
             int requestedPlayerID = GetID();
-
-            bool indexIsFound = false;
 
             for (int i = 0; i < _playersList.Count; i++)
             {
