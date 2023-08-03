@@ -79,16 +79,14 @@ namespace OOP3PlayersDatabase
             ShowBanStatus();
         }
 
-        public bool Unban()
+        public void Unban()
         {
             IsBanned = false;           
-            return IsBanned;
         }
 
-        public bool Ban()
+        public void Ban()
         {
             IsBanned = true;
-            return IsBanned;
         }
 
         private void ShowBanStatus()
@@ -126,7 +124,7 @@ namespace OOP3PlayersDatabase
         public void AddPlayer()
         {
             Console.WriteLine("Добавить игрока.");
-            string inputNickname = GetUserInput("Введите ник нового игрока: ");
+            string inputNickname = ReadUserInput("Введите ник нового игрока: ");
 
             if (inputNickname != "")
             {
@@ -193,14 +191,14 @@ namespace OOP3PlayersDatabase
             return _currentMaxID;
         }
 
-        private int GetID()
+        private int ReadID()
         {
             bool isNumber = false;
             int parsedNumber = 0;
 
             while (isNumber == false)
             {
-                string userInput = GetUserInput("Введите ID: ");
+                string userInput = ReadUserInput("Введите ID: ");
 
                 isNumber = int.TryParse(userInput, out parsedNumber);
             }
@@ -213,7 +211,7 @@ namespace OOP3PlayersDatabase
             playerIndex = 0;
             bool indexIsFound = false;
 
-            int requestedPlayerID = GetID();
+            int requestedPlayerID = ReadID();
 
             for (int i = 0; i < _playersList.Count; i++)
             {
@@ -233,7 +231,7 @@ namespace OOP3PlayersDatabase
             return false;
         }
 
-        private string GetUserInput(string inputRequest)
+        private string ReadUserInput(string inputRequest)
         {
             Console.Write(inputRequest);
             string userInput = Console.ReadLine();
