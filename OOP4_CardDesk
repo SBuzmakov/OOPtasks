@@ -1,0 +1,136 @@
+namespace OOP4_CardDeck
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Game game = new Game();
+
+            bool isPlaying = true;
+
+            while (isPlaying)
+            {
+                game.DoTurn();
+            }
+
+            Console.ReadLine();
+    }
+
+        class Game
+        {
+            private Player _player = new Player();
+            private CardDeck _cardDeck = new CardDeck();
+            
+            public void DoTurn()
+            {
+                Card card = _cardDeck.GetRandomCard();
+
+                _player.TakeCardToHand(card);
+
+                _cardDeck.RemoveCard(card);
+            }
+        }
+
+        class Player
+        {
+            private List<Card> _cardsHand = new List<Card>();
+
+            public void ShowHand()
+            {
+                Console.Write("\nваши карты: ");
+
+                for (int i = 0; i < _cardsHand.Count; i++)
+                {
+                    _cardsHand[i].Show();
+                }
+            }
+
+            public void TakeCardToHand(Card card)
+            {
+                _cardsHand.Add(card);
+            }
+        }
+
+        class CardDeck
+        {
+            private List<Card> _cards = Fill();
+            
+            public void RemoveCard(Card card)
+            {
+                _cards.Remove(card);               
+            }
+
+            public Card GetRandomCard()
+            {
+                int randomIndex = GetRandomIndex();
+
+                Card card = _cards[randomIndex];
+
+                return card;                
+            }
+
+            private int GetRandomIndex()
+            {
+                Random random = new Random();
+                int index = random.Next(0, _cards.Count);
+                return index;
+            }
+
+            private static List<Card> Fill()
+            {
+                List<Card> cards = new List<Card>();
+
+                foreach (int i in Enum.GetValues(typeof(CardsScoreValues)))
+                {
+                    CardsScoreValues cardSymbol = (CardsScoreValues)i;
+
+                    cards.Add(new Card(cardSymbol, i, '♠',ConsoleColor.DarkGray));
+
+                    cards.Add(new Card(cardSymbol, i, '♣', ConsoleColor.DarkGray));
+
+                    cards.Add(new Card(cardSymbol, i, '♥', ConsoleColor.Red));
+
+                    cards.Add(new Card(cardSymbol, i, '♦', ConsoleColor.Red));
+                }
+
+                return cards;
+            }
+        }
+
+        class Card
+        {
+            public Card(CardsScoreValues cardSymbol, int cardScoreValue, char cardSuit, ConsoleColor cardColor)
+            {
+                CardSymbol = cardSymbol;
+                CardScoreValue = cardScoreValue;
+                CardSuit = cardSuit;
+                CardColor = cardColor;
+            }
+
+            public CardsScoreValues CardSymbol { get; private set; }
+            public int CardScoreValue { get; private set; }
+            public char CardSuit { get; private set; }
+            public ConsoleColor CardColor { get; private set; }
+
+            public void Show()
+            {
+                Console.ForegroundColor = CardColor;
+                Console.Write($"{CardSymbol}{CardSuit}\t");
+                Console.ResetColor();
+            }
+        }
+
+        enum CardsScoreValues
+        {
+            _6 = 6,
+            _7 = 7,
+            _8 = 8,
+            _9 = 9,
+            _10 = 10,
+            _J = 2,
+            _Q = 3,
+            _K = 4,
+            _A = 11
+        }
+    }
+}
