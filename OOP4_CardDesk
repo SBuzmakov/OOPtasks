@@ -14,8 +14,7 @@ namespace OOP4_CardDeck
             {
                 Player player = new Player(name);
                 Player enemy = new Player("Оппонент");
-                CardDeck cardDeck = new CardDeck();
-                Game game = new Game(player, enemy, cardDeck);
+                Game game = new Game(player, enemy);
 
                 Console.WriteLine("Наберите не больше 21 очка. Колода 36 карт. J - два, Q - три, К - четыре, А - одиннадцать очков.");
 
@@ -67,17 +66,16 @@ namespace OOP4_CardDeck
         {
             private Player _player;
             private Player _enemy;
-            private CardDeck _cardDeck;
+            private CardDeck _cardDeck = new CardDeck();
             private int _scoreLimit = 21;
             private int _dangerScore = 11;
             private int _randomRange = 2;
             private bool _isPlaying;
 
-            public Game(Player player, Player enemy, CardDeck cardDeck)
+            public Game(Player player, Player enemy)
             {
                 _enemy = enemy;
                 _player = player;
-                _cardDeck = cardDeck;
                 _isPlaying = true;
             }
 
