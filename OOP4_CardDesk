@@ -46,8 +46,6 @@ namespace OOP4_CardDeck
                     return true;
                     break;
             }
-
-
         }
 
         static string SetName()
@@ -59,6 +57,7 @@ namespace OOP4_CardDeck
                 Console.Write("Введите ваше имя: ");
                 name = Console.ReadLine();
             }
+
             return name;
         }
 
@@ -66,7 +65,7 @@ namespace OOP4_CardDeck
         {
             private Player _player;
             private Player _enemy;
-            private CardDeck _cardDeck = new CardDeck();
+            private Deck _cardDeck = new Deck();
             private int _scoreLimit = 21;
             private int _dangerScore = 11;
             private int _randomRange = 2;
@@ -202,29 +201,24 @@ namespace OOP4_CardDeck
                     if(_player.IsScoreOverdone && _enemy.IsScoreOverdone)
                     {
                         Console.WriteLine("Оба проиграли!");
-                    }
-                    
-                    if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore > _enemy.TotalScore)
+                    }                   
+                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore > _enemy.TotalScore)
                     {
                         Console.WriteLine($"Победитель - {_player.Name}!");
                     }
-
-                    if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore < _enemy.TotalScore)
+                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore < _enemy.TotalScore)
                     {
                         Console.WriteLine($"Победитель - {_enemy.Name}!");
                     }
-
-                    if (!_player.IsScoreOverdone && _enemy.IsScoreOverdone)
+                    else if (!_player.IsScoreOverdone && _enemy.IsScoreOverdone)
                     {
                         Console.WriteLine($"Победитель - {_player.Name}!");
                     }
-
-                    if (_player.IsScoreOverdone && !_enemy.IsScoreOverdone)
+                    else if (_player.IsScoreOverdone && !_enemy.IsScoreOverdone)
                     {
                         Console.WriteLine($"Победитель - {_enemy.Name}!");
                     }
-
-                    if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore == _enemy.TotalScore)
+                    else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore == _enemy.TotalScore)
                     {
                         Console.WriteLine($"Победитель - дружба. Ничья!");
                     }
@@ -284,7 +278,7 @@ namespace OOP4_CardDeck
 
                 for (int i = 0; i < _cardsHand.Count; i++)
                 {
-                    score += _cardsHand[i].CardScoreValue;
+                    score += _cardsHand[i].ScoreValue;
                 }
 
                 return score;
@@ -296,7 +290,7 @@ namespace OOP4_CardDeck
             }
         }
 
-        class CardDeck
+        class Deck
         {
             private List<Card> _cards = Fill();
             
@@ -325,17 +319,17 @@ namespace OOP4_CardDeck
             {
                 List<Card> cards = new List<Card>();
 
-                foreach (int i in Enum.GetValues(typeof(CardsScoreValues)))
+                foreach (int scoreValue in Enum.GetValues(typeof(ScoreValues)))
                 {
-                    CardsScoreValues cardSymbol = (CardsScoreValues)i;
+                    ScoreValues cardSymbol = (ScoreValues)scoreValue;
 
-                    cards.Add(new Card(cardSymbol, i, '♠',ConsoleColor.DarkGray));
+                    cards.Add(new Card(cardSymbol, scoreValue, '♠',ConsoleColor.DarkGray));
 
-                    cards.Add(new Card(cardSymbol, i, '♣', ConsoleColor.DarkGray));
+                    cards.Add(new Card(cardSymbol, scoreValue, '♣', ConsoleColor.DarkGray));
 
-                    cards.Add(new Card(cardSymbol, i, '♥', ConsoleColor.Red));
+                    cards.Add(new Card(cardSymbol, scoreValue, '♥', ConsoleColor.Red));
 
-                    cards.Add(new Card(cardSymbol, i, '♦', ConsoleColor.Red));
+                    cards.Add(new Card(cardSymbol, scoreValue, '♦', ConsoleColor.Red));
                 }
 
                 return cards;
@@ -344,28 +338,28 @@ namespace OOP4_CardDeck
 
         class Card
         {
-            public Card(CardsScoreValues cardSymbol, int cardScoreValue, char cardSuit, ConsoleColor cardColor)
+            public Card(ScoreValues cardSymbol, int cardScoreValue, char cardSuit, ConsoleColor cardColor)
             {
-                CardSymbol = cardSymbol;
-                CardScoreValue = cardScoreValue;
-                CardSuit = cardSuit;
-                CardColor = cardColor;
+                Symbol = cardSymbol;
+                ScoreValue = cardScoreValue;
+                Suit = cardSuit;
+                Color = cardColor;
             }
 
-            public CardsScoreValues CardSymbol { get; private set; }
-            public int CardScoreValue { get; private set; }
-            public char CardSuit { get; private set; }
-            public ConsoleColor CardColor { get; private set; }
+            public ScoreValues Symbol { get; private set; }
+            public int ScoreValue { get; private set; }
+            public char Suit { get; private set; }
+            public ConsoleColor Color { get; private set; }
 
             public void Show()
             {
-                Console.ForegroundColor = CardColor;
-                Console.Write($"{CardSymbol}{CardSuit}  ");
+                Console.ForegroundColor = Color;
+                Console.Write($"{Symbol}{Suit}  ");
                 Console.ResetColor();
             }
         }
 
-        enum CardsScoreValues
+        enum ScoreValues
         {
             _6 = 6,
             _7 = 7,
