@@ -14,7 +14,7 @@ namespace OOP4_CardDeck
             {
                 Player player = new Player(name);
                 Player enemy = new Player("Оппонент");
-                Game game = new Game(player, enemy);
+                Game21 game = new Game21(player, enemy);
 
                 Console.WriteLine("Наберите не больше 21 очка. Колода 36 карт. J - два, Q - три, К - четыре, А - одиннадцать очков.");
 
@@ -61,17 +61,31 @@ namespace OOP4_CardDeck
             return name;
         }
 
-        class Game
+        class Game21
         {
+            private Dictionary<string, int> _game21cardsValues = new Dictionary<string, int>()
+            {
+                { "_6", 6 },
+                { "_7", 7 },
+                { "_8", 8 },
+                { "_9", 9 },
+                { "_10", 10 },
+                { "_J", 2 },
+                { "_Q", 3 },
+                { "_K", 4 },
+                { "_A", 11 }
+            };
             private Player _player;
+            private int _playerScore = 0;
             private Player _enemy;
+            private int _enemyScore = 0;
             private Deck _cardDeck = new Deck();
             private int _scoreLimit = 21;
             private int _dangerScore = 11;
             private int _randomRange = 2;
-            private bool _isPlaying;
+            private bool _isPlaying;           
 
-            public Game(Player player, Player enemy)
+            public Game21(Player player, Player enemy)
             {
                 _enemy = enemy;
                 _player = player;
@@ -88,13 +102,13 @@ namespace OOP4_CardDeck
 
                     DoTurn(_enemy);
 
-                    _player.AssignScore();
+                    _playerScore = CountUpScore(_player, _playerScore);
 
-                    _enemy.AssignScore();
+                    _enemyScore = CountUpScore(_enemy, _enemyScore);
 
-                    CheckScoreOverdone(_player);
+                    CheckScoreOverdone(_player, _playerScore);
 
-                    CheckScoreOverdone(_enemy);
+                    CheckScoreOverdone(_enemy, _enemyScore);
 
                     GetResult();
 
@@ -122,7 +136,7 @@ namespace OOP4_CardDeck
                 Random random = new Random();
                 int enemyDecision = random.Next(0, _randomRange);
 
-                if(_enemy.CanTakeCard && _enemy.TotalScore >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemy.TotalScore == _scoreLimit)
+                if(_enemy.CanTakeCard && _enemyScore >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemyScore == _scoreLimit)
                 {
                     _enemy.BanTurn();
                 }               
@@ -137,7 +151,6 @@ namespace OOP4_CardDeck
                     Console.WriteLine("Оппонент взял карту.");
                     Console.ReadKey(true);
                 }
-
             }
 
             private void ControlPlaying()
@@ -169,9 +182,9 @@ namespace OOP4_CardDeck
                 }                
             }
 
-            private void CheckScoreOverdone(Player player)
+            private void CheckScoreOverdone(Player player, int score)
             {
-                if (player.TotalScore > _scoreLimit)
+                if (score > _scoreLimit)
                 {
                     player.BanTurn();
 
@@ -179,11 +192,11 @@ namespace OOP4_CardDeck
                 }
             }
 
-            private void PrintScore(Player player)
+            private void PrintScore(Player player, int score)
             {                
                 player.ShowHand();
 
-                Console.WriteLine($"Очки {player.Name}: {player.TotalScore}");               
+                Console.WriteLine($"Очки {player.Name}: {score}");               
             }
 
             private void GetResult()
@@ -194,19 +207,19 @@ namespace OOP4_CardDeck
 
                     Console.Clear();
 
-                    PrintScore(_player);
+                    PrintScore(_player, _playerScore);
 
-                    PrintScore(_enemy);
+                    PrintScore(_enemy, _enemyScore);
 
                     if(_player.IsScoreOverdone && _enemy.IsScoreOverdone)
                     {
                         Console.WriteLine("Оба проиграли!");
                     }                   
-                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore > _enemy.TotalScore)
+                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore > _enemyScore)
                     {
                         Console.WriteLine($"Победитель - {_player.Name}!");
                     }
-                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore < _enemy.TotalScore)
+                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore < _enemyScore)
                     {
                         Console.WriteLine($"Победитель - {_enemy.Name}!");
                     }
@@ -218,13 +231,27 @@ namespace OOP4_CardDeck
                     {
                         Console.WriteLine($"Победитель - {_enemy.Name}!");
                     }
-                    else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _player.TotalScore == _enemy.TotalScore)
+                    else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore == _enemyScore)
                     {
                         Console.WriteLine($"Победитель - дружба. Ничья!");
                     }
 
                     Console.ReadKey(true);
                 }
+            }
+
+            private int CountUpScore(Player player, int score)
+            {
+                List<Card> hand = player.GetHand();
+
+                score = 0;
+
+                for (int i = 0; i < hand.Count; i++)
+                {
+                    score += _game21cardsValues[hand[i].Symbol];
+                }
+
+                return score;
             }
         }
 
@@ -239,7 +266,6 @@ namespace OOP4_CardDeck
 
             public bool IsScoreOverdone { get; private set; } = false;
             public bool CanTakeCard {  get; private set; } = true;
-            public int TotalScore { get; private set; }
             public string Name { get; private set; }
 
             public void SetOnOverdoneStatus()
@@ -263,7 +289,7 @@ namespace OOP4_CardDeck
 
                 for (int i = 0; i < _cardsHand.Count; i++)
                 {
-                    _cardsHand[i].Show();
+                    _cardsHand[i].Print();
                 }
             }
             
@@ -272,21 +298,9 @@ namespace OOP4_CardDeck
                 _cardsHand.Add(card);
             }
 
-            public int CountUpScore()
+            public List<Card> GetHand()
             {
-                int score = 0;
-
-                for (int i = 0; i < _cardsHand.Count; i++)
-                {
-                    score += _cardsHand[i].ScoreValue;
-                }
-
-                return score;
-            }
-
-            public void AssignScore()
-            {
-                TotalScore = CountUpScore();
+                return _cardsHand;
             }
         }
 
@@ -294,6 +308,14 @@ namespace OOP4_CardDeck
         {
             private List<Card> _cards = Fill();
             
+            public void Show()
+            {
+                for (int i = 0; i < _cards.Count; i++)
+                {
+                    _cards[i].Print();
+                }
+            }
+
             public void RemoveCard(Card card)
             {
                 _cards.Remove(card);               
@@ -319,17 +341,17 @@ namespace OOP4_CardDeck
             {
                 List<Card> cards = new List<Card>();
 
-                foreach (int scoreValue in Enum.GetValues(typeof(ScoreValues)))
+                string[] cardSymbols = Enum.GetNames(typeof(CardsSymbols));
+
+                for (int i = 0; i < cardSymbols.Length; i++)
                 {
-                    ScoreValues cardSymbol = (ScoreValues)scoreValue;
+                    cards.Add(new Card(cardSymbols[i], '♠',ConsoleColor.DarkGray));
 
-                    cards.Add(new Card(cardSymbol, scoreValue, '♠',ConsoleColor.DarkGray));
+                    cards.Add(new Card(cardSymbols[i], '♣', ConsoleColor.DarkGray));
 
-                    cards.Add(new Card(cardSymbol, scoreValue, '♣', ConsoleColor.DarkGray));
+                    cards.Add(new Card(cardSymbols[i], '♥', ConsoleColor.Red));
 
-                    cards.Add(new Card(cardSymbol, scoreValue, '♥', ConsoleColor.Red));
-
-                    cards.Add(new Card(cardSymbol, scoreValue, '♦', ConsoleColor.Red));
+                    cards.Add(new Card(cardSymbols[i], '♦', ConsoleColor.Red));
                 }
 
                 return cards;
@@ -338,20 +360,18 @@ namespace OOP4_CardDeck
 
         class Card
         {
-            public Card(ScoreValues cardSymbol, int cardScoreValue, char cardSuit, ConsoleColor cardColor)
+            public Card(string cardSymbol, char cardSuit, ConsoleColor cardColor)
             {
                 Symbol = cardSymbol;
-                ScoreValue = cardScoreValue;
                 Suit = cardSuit;
                 Color = cardColor;
             }
 
-            public ScoreValues Symbol { get; private set; }
-            public int ScoreValue { get; private set; }
+            public string Symbol { get; private set; }
             public char Suit { get; private set; }
             public ConsoleColor Color { get; private set; }
 
-            public void Show()
+            public void Print()
             {
                 Console.ForegroundColor = Color;
                 Console.Write($"{Symbol}{Suit}  ");
@@ -359,17 +379,17 @@ namespace OOP4_CardDeck
             }
         }
 
-        enum ScoreValues
+        enum CardsSymbols
         {
-            _6 = 6,
-            _7 = 7,
-            _8 = 8,
-            _9 = 9,
-            _10 = 10,
-            _J = 2,
-            _Q = 3,
-            _K = 4,
-            _A = 11
+            _6,
+            _7,
+            _8,
+            _9,
+            _10,
+            _J,
+            _Q,
+            _K,
+            _A
         }
     }
 }
