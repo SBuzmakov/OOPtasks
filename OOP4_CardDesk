@@ -83,13 +83,12 @@ namespace OOP4_CardDeck
             private int _scoreLimit = 21;
             private int _dangerScore = 11;
             private int _randomRange = 2;
-            private bool _isPlaying;           
+            private bool _isPlaying = true;           
 
             public Game21(Player player, Player enemy)
             {
                 _enemy = enemy;
                 _player = player;
-                _isPlaying = true;
             }
 
             public void Play()
