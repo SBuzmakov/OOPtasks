@@ -44,19 +44,6 @@ namespace OOP4_CardDeck
                     return true;
                     break;
             }
-        }
-
-        static string SetName()
-        {
-            string name = "";
-
-            while (name == "")
-            {
-                Console.Write("Введите ваше имя: ");
-                name = Console.ReadLine();
-            }
-
-            return name;
         }       
     }
 
