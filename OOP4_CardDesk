@@ -8,11 +8,9 @@ namespace OOP4_CardDeck
         {
             bool isWork = true;
 
-            string name = SetName();
-
             while (isWork)
             {
-                Player player = new Player(name);
+                Player player = new Player();
                 Player enemy = new Player("Оппонент");
                 Game21 game = new Game21(player, enemy);
 
@@ -59,336 +57,351 @@ namespace OOP4_CardDeck
             }
 
             return name;
-        }
+        }       
+    }
 
-        class Game21
-        {
-            private Dictionary<string, int> _game21cardsValues = new Dictionary<string, int>()
+    class Game21
+    {
+        private Dictionary<string, int> _cardsValues = new Dictionary<string, int>()
             {
-                { "_6", 6 },
-                { "_7", 7 },
-                { "_8", 8 },
-                { "_9", 9 },
-                { "_10", 10 },
-                { "_J", 2 },
-                { "_Q", 3 },
-                { "_K", 4 },
-                { "_A", 11 }
+                { "6", 6 },
+                { "7", 7 },
+                { "8", 8 },
+                { "9", 9 },
+                { "10", 10 },
+                { "J", 2 },
+                { "Q", 3 },
+                { "K", 4 },
+                { "A", 11 }
             };
-            private Player _player;
-            private int _playerScore = 0;
-            private Player _enemy;
-            private int _enemyScore = 0;
-            private Deck _cardDeck = new Deck();
-            private int _scoreLimit = 21;
-            private int _dangerScore = 11;
-            private int _randomRange = 2;
-            private bool _isPlaying = true;           
+        private Player _player;
+        private int _playerScore = 0;
+        private Player _enemy;
+        private int _enemyScore = 0;
+        private Deck _cardDeck = new Deck();
+        private Stack<Card> _mixedDeck = new Stack<Card>();
+        private int _scoreLimit = 21;
+        private int _dangerScore = 11;
+        private int _randomRange = 2;
+        private bool _isPlaying = true;
 
-            public Game21(Player player, Player enemy)
+        public Game21(Player player, Player enemy)
+        {
+            _enemy = enemy;
+            _player = player;
+
+            _mixedDeck = _cardDeck.Mix();
+        }
+
+        public void Play()
+        {
+            Console.ReadKey();
+
+            while (_isPlaying)
             {
-                _enemy = enemy;
-                _player = player;
-            }
+                _player.ShowHand();
 
-            public void Play()
-            {
-                while (_isPlaying)
-                {
-                    _player.ShowHand();
+                ControlPlaying();
 
-                    ControlPlaying();
+                DoTurn(_enemy);
 
-                    DoTurn(_enemy);
+                _playerScore = CountUpScore(_player, _playerScore);
 
-                    _playerScore = CountUpScore(_player, _playerScore);
+                _enemyScore = CountUpScore(_enemy, _enemyScore);
 
-                    _enemyScore = CountUpScore(_enemy, _enemyScore);
+                CheckScoreOverdone(_player, _playerScore);
 
-                    CheckScoreOverdone(_player, _playerScore);
+                CheckScoreOverdone(_enemy, _enemyScore);
 
-                    CheckScoreOverdone(_enemy, _enemyScore);
+                GetResult();
 
-                    GetResult();
-
-                    Console.Clear();
-                }                              
-            }
-
-            private void DoTurn()
-            {
-                if (_player.CanTakeCard)
-                {
-                    Card card = _cardDeck.GetRandomCard();
-
-                    _cardDeck.RemoveCard(card);
-
-                    _player.TakeCardToHand(card);
-
-                    Console.WriteLine("Вы взяли карту.");
-                    Console.ReadKey(true);
-                }
-            }
-
-            private void DoTurn(Player enemy)
-            {
-                Random random = new Random();
-                int enemyDecision = random.Next(0, _randomRange);
-
-                if(_enemy.CanTakeCard && _enemyScore >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemyScore == _scoreLimit)
-                {
-                    _enemy.BanTurn();
-                }               
-                else if(_enemy.CanTakeCard)
-                {
-                    Card card = _cardDeck.GetRandomCard();
-
-                    _cardDeck.RemoveCard(card);
-
-                    _enemy.TakeCardToHand(card);
-
-                    Console.WriteLine("Оппонент взял карту.");
-                    Console.ReadKey(true);
-                }
-            }
-
-            private void ControlPlaying()
-            {
-                const ConsoleKey PressY = ConsoleKey.Y;
-                const ConsoleKey PressN = ConsoleKey.N;
-                const ConsoleKey PressE = ConsoleKey.E;
-
-                Console.WriteLine($"\n\nВытянуть карту из колоды?\t{PressY} - вытянуть карту, {PressN} - пас, {PressE} - выйти из игры.");
-
-                ConsoleKeyInfo charKey = Console.ReadKey(true);
-
-                switch (charKey.Key)
-                {
-                    case PressE:
-                        _isPlaying = false;
-                        break;
-
-                    case PressY:
-                        DoTurn();
-                        break;
-
-                    case PressN:
-                        _player.BanTurn();
-                        break;
-                    default:
-                        Console.WriteLine("Ход пропущен");
-                        break;
-                }                
-            }
-
-            private void CheckScoreOverdone(Player player, int score)
-            {
-                if (score > _scoreLimit)
-                {
-                    player.BanTurn();
-
-                    player.SetOnOverdoneStatus();
-                }
-            }
-
-            private void PrintScore(Player player, int score)
-            {                
-                player.ShowHand();
-
-                Console.WriteLine($"Очки {player.Name}: {score}");               
-            }
-
-            private void GetResult()
-            {
-                if(_player.CanTakeCard == false && _enemy.CanTakeCard == false)
-                {
-                    _isPlaying = false;
-
-                    Console.Clear();
-
-                    PrintScore(_player, _playerScore);
-
-                    PrintScore(_enemy, _enemyScore);
-
-                    if(_player.IsScoreOverdone && _enemy.IsScoreOverdone)
-                    {
-                        Console.WriteLine("Оба проиграли!");
-                    }                   
-                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore > _enemyScore)
-                    {
-                        Console.WriteLine($"Победитель - {_player.Name}!");
-                    }
-                    else if(!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore < _enemyScore)
-                    {
-                        Console.WriteLine($"Победитель - {_enemy.Name}!");
-                    }
-                    else if (!_player.IsScoreOverdone && _enemy.IsScoreOverdone)
-                    {
-                        Console.WriteLine($"Победитель - {_player.Name}!");
-                    }
-                    else if (_player.IsScoreOverdone && !_enemy.IsScoreOverdone)
-                    {
-                        Console.WriteLine($"Победитель - {_enemy.Name}!");
-                    }
-                    else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore == _enemyScore)
-                    {
-                        Console.WriteLine($"Победитель - дружба. Ничья!");
-                    }
-
-                    Console.ReadKey(true);
-                }
-            }
-
-            private int CountUpScore(Player player, int score)
-            {
-                List<Card> hand = player.GetHand();
-
-                score = 0;
-
-                for (int i = 0; i < hand.Count; i++)
-                {
-                    score += _game21cardsValues[hand[i].Symbol];
-                }
-
-                return score;
+                Console.Clear();
             }
         }
 
-        class Player
+        private void DoTurn()
         {
-            private List<Card> _cardsHand = new List<Card>();
-
-            public Player(string name)
+            if (_player.CanTakeCard)
             {
-                Name = name;
+                _player.TakeCardToHand(_mixedDeck.Pop());
+
+                Console.WriteLine("Вы взяли карту.");
+                Console.ReadKey(true);
             }
+        }
 
-            public bool IsScoreOverdone { get; private set; } = false;
-            public bool CanTakeCard {  get; private set; } = true;
-            public string Name { get; private set; }
+        private void DoTurn(Player enemy)
+        {
+            Random random = new Random();
+            int enemyDecision = random.Next(0, _randomRange);
 
-            public void SetOnOverdoneStatus()
+            if (_enemy.CanTakeCard && _enemyScore >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemyScore == _scoreLimit)
             {
-                IsScoreOverdone = true;
+                _enemy.BanTurn();
             }
-
-            public void BanTurn()
+            else if (_enemy.CanTakeCard)
             {
-                if (CanTakeCard)
+                _enemy.TakeCardToHand(_mixedDeck.Pop());
+
+                Console.WriteLine("Оппонент взял карту.");
+                Console.ReadKey(true);
+            }
+        }
+
+        private void ControlPlaying()
+        {
+            const ConsoleKey PressY = ConsoleKey.Y;
+            const ConsoleKey PressN = ConsoleKey.N;
+            const ConsoleKey PressE = ConsoleKey.E;
+
+            Console.WriteLine($"\n\nВытянуть карту из колоды?\t{PressY} - вытянуть карту, {PressN} - пас, {PressE} - выйти из игры.");
+
+            ConsoleKeyInfo charKey = Console.ReadKey(true);
+
+            switch (charKey.Key)
+            {
+                case PressE:
+                    _isPlaying = false;
+                    break;
+
+                case PressY:
+                    DoTurn();
+                    break;
+
+                case PressN:
+                    _player.BanTurn();
+                    break;
+                default:
+                    Console.WriteLine("Ход пропущен");
+                    break;
+            }
+        }
+
+        private void CheckScoreOverdone(Player player, int score)
+        {
+            if (score > _scoreLimit)
+            {
+                player.BanTurn();
+
+                player.SetOnOverdoneStatus();
+            }
+        }
+
+        private void PrintScore(Player player, int score)
+        {
+            player.ShowHand();
+
+            Console.WriteLine($"Очки {player.Name}: {score}");
+        }
+
+        private void GetResult()
+        {
+            if (_player.CanTakeCard == false && _enemy.CanTakeCard == false)
+            {
+                _isPlaying = false;
+
+                Console.Clear();
+
+                PrintScore(_player, _playerScore);
+
+                PrintScore(_enemy, _enemyScore);
+
+                if (_player.IsScoreOverdone && _enemy.IsScoreOverdone)
                 {
+                    Console.WriteLine("Оба проиграли!");
+                }
+                else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore > _enemyScore)
+                {
+                    Console.WriteLine($"Победитель - {_player.Name}!");
+                }
+                else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore < _enemyScore)
+                {
+                    Console.WriteLine($"Победитель - {_enemy.Name}!");
+                }
+                else if (!_player.IsScoreOverdone && _enemy.IsScoreOverdone)
+                {
+                    Console.WriteLine($"Победитель - {_player.Name}!");
+                }
+                else if (_player.IsScoreOverdone && !_enemy.IsScoreOverdone)
+                {
+                    Console.WriteLine($"Победитель - {_enemy.Name}!");
+                }
+                else if (!_player.IsScoreOverdone && !_enemy.IsScoreOverdone && _playerScore == _enemyScore)
+                {
+                    Console.WriteLine($"Победитель - дружба. Ничья!");
+                }
+
+                Console.ReadKey(true);
+            }
+        }
+
+        private int CountUpScore(Player player, int score)
+        {
+            List<Card> hand = player.GetHand();
+
+            score = 0;
+
+            for (int i = 0; i < hand.Count; i++)
+            {
+                score += _cardsValues[hand[i].Symbol];
+            }
+
+            return score;
+        }
+    }
+
+    class Player
+    {
+        private List<Card> _cardsHand = new List<Card>();
+
+        public Player()
+        {
+            Name = SetName();
+        }
+
+        public Player(string name)
+        {
+            Name = name;
+        }
+
+        public bool IsScoreOverdone { get; private set; } = false;
+        public bool CanTakeCard { get; private set; } = true;
+        public string Name { get; private set; }
+
+        public void SetOnOverdoneStatus()
+        {
+            IsScoreOverdone = true;
+        }
+
+        public void BanTurn()
+        {
+            if (CanTakeCard)
+            {
                 CanTakeCard = false;
                 Console.WriteLine($"{Name} завершил партию.");
                 Console.ReadKey(true);
-                }
-            }
-
-            public void ShowHand()
-            {
-                Console.Write($"\nKарты {Name}:\t");
-
-                for (int i = 0; i < _cardsHand.Count; i++)
-                {
-                    _cardsHand[i].Print();
-                }
-            }
-            
-            public void TakeCardToHand(Card card)
-            {
-                _cardsHand.Add(card);
-            }
-
-            public List<Card> GetHand()
-            {
-                return _cardsHand;
             }
         }
 
-        class Deck
+        public void ShowHand()
         {
-            private List<Card> _cards = Fill();
-            
-            public void Show()
+            Console.Write($"\nKарты {Name}:\t");
+
+            for (int i = 0; i < _cardsHand.Count; i++)
             {
-                for (int i = 0; i < _cards.Count; i++)
-                {
-                    _cards[i].Print();
-                }
+                _cardsHand[i].Print();
+            }
+        }
+
+        public void TakeCardToHand(Card card)
+        {
+            _cardsHand.Add(card);
+        }
+
+        public List<Card> GetHand()
+        {
+            return _cardsHand;
+        }
+
+        private string SetName()
+        {
+            string name = "";
+
+            while (name == "")
+            {
+                Console.Write("Введите ваше имя: ");
+                name = Console.ReadLine();
             }
 
-            public void RemoveCard(Card card)
-            {
-                _cards.Remove(card);               
-            }
+            return name;
+        }
+    }
 
-            public Card GetRandomCard()
+    class Deck
+    {
+        private List<Card> _cards = new List<Card>();
+
+        public Deck()
+        {
+            _cards = Fill();
+        }
+
+        public void Show()
+        {
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                _cards[i].Print();
+            }
+        }
+
+        public Stack<Card> Mix()
+        {
+            Stack<Card> mixedDeck = new Stack<Card>();
+
+            for (int i = 0; i < _cards.Count; i++)
             {
                 int randomIndex = GetRandomIndex();
 
-                Card card = _cards[randomIndex];
+                Card temporaryCard = _cards[randomIndex];
 
-                return card;                
+                mixedDeck.Push(temporaryCard);
+
+                _cards[randomIndex] = temporaryCard;
             }
 
-            private int GetRandomIndex()
+            return mixedDeck;
+        }
+
+        private int GetRandomIndex()
+        {
+            Random random = new Random();
+            int index = random.Next(0, _cards.Count - 1);
+            return index;
+        }
+
+        private List<Card> Fill()
+        {
+            List<Card> cards = new List<Card>();
+
+            string[] cardNames = new string[] {"6", "7", "8", "9", "10", "J", "Q", "K", "A" };
+            char[] graySuits = new char[] { '♠', '♣' };
+            char[] redSuits = new char[] { '♥', '♦' };
+
+            for (int i = 0; i < cardNames.Length; i++)
             {
-                Random random = new Random();
-                int index = random.Next(0, _cards.Count);
-                return index;
-            }
-
-            private static List<Card> Fill()
-            {
-                List<Card> cards = new List<Card>();
-
-                string[] cardSymbols = Enum.GetNames(typeof(CardsSymbols));
-
-                for (int i = 0; i < cardSymbols.Length; i++)
+                for (int j = 0; j < graySuits.Length; j++)
                 {
-                    cards.Add(new Card(cardSymbols[i], '♠',ConsoleColor.DarkGray));
-
-                    cards.Add(new Card(cardSymbols[i], '♣', ConsoleColor.DarkGray));
-
-                    cards.Add(new Card(cardSymbols[i], '♥', ConsoleColor.Red));
-
-                    cards.Add(new Card(cardSymbols[i], '♦', ConsoleColor.Red));
+                    cards.Add(new Card(cardNames[i], graySuits[j], ConsoleColor.DarkGray));
                 }
 
-                return cards;
+                for (int j = 0; j < redSuits.Length; j++)
+                {
+                    cards.Add(new Card(cardNames[i], redSuits[j], ConsoleColor.DarkRed));
+                }
             }
+
+            return cards;
+        }
+    }
+
+    class Card
+    {
+        public Card(string cardSymbol, char cardSuit, ConsoleColor cardColor)
+        {
+            Symbol = cardSymbol;
+            Suit = cardSuit;
+            Color = cardColor;
         }
 
-        class Card
+        public string Symbol { get; private set; }
+        public char Suit { get; private set; }
+        public ConsoleColor Color { get; private set; }
+
+        public void Print()
         {
-            public Card(string cardSymbol, char cardSuit, ConsoleColor cardColor)
-            {
-                Symbol = cardSymbol;
-                Suit = cardSuit;
-                Color = cardColor;
-            }
-
-            public string Symbol { get; private set; }
-            public char Suit { get; private set; }
-            public ConsoleColor Color { get; private set; }
-
-            public void Print()
-            {
-                Console.ForegroundColor = Color;
-                Console.Write($"{Symbol}{Suit}  ");
-                Console.ResetColor();
-            }
-        }
-
-        enum CardsSymbols
-        {
-            _6,
-            _7,
-            _8,
-            _9,
-            _10,
-            _J,
-            _Q,
-            _K,
-            _A
+            Console.ForegroundColor = Color;
+            Console.Write($"{Symbol}{Suit}  ");
+            Console.ResetColor();
         }
     }
 }
