@@ -44,7 +44,7 @@ namespace OOP4_CardDeck
                     return true;
                     break;
             }
-        }       
+        }      
     }
 
     class Game21
