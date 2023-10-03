@@ -65,7 +65,6 @@ namespace OOP4_CardDeck
         private int _playerScore = 0;
         private Player _enemy;
         private int _enemyScore = 0;
-        private Deck _cardDeck = new Deck();
         private Stack<Card> _mixedDeck = new Stack<Card>();
         private int _scoreLimit = 21;
         private int _dangerScore = 11;
@@ -77,7 +76,7 @@ namespace OOP4_CardDeck
             _enemy = enemy;
             _player = player;
 
-            _mixedDeck = _cardDeck.Mix();
+            _mixedDeck = new Deck().Mix();
         }
 
         public void Play()
@@ -103,6 +102,14 @@ namespace OOP4_CardDeck
                 GetResult();
 
                 Console.Clear();
+            }
+        }
+
+        private void PrintStack()
+        {
+            foreach (var item in _mixedDeck)
+            {
+                item.Print();
             }
         }
 
@@ -287,7 +294,9 @@ namespace OOP4_CardDeck
 
         public List<Card> GetHand()
         {
-            return _cardsHand;
+            List<Card> hand = _cardsHand.ToList();
+
+            return hand;
         }
 
         private string SetName()
@@ -324,25 +333,29 @@ namespace OOP4_CardDeck
         public Stack<Card> Mix()
         {
             Stack<Card> mixedDeck = new Stack<Card>();
+            int cardsCount = _cards.Count;
 
-            for (int i = 0; i < _cards.Count; i++)
+            for (int i = 0; i < cardsCount; i++)
             {
                 int randomIndex = GetRandomIndex();
 
-                Card temporaryCard = _cards[randomIndex];
+                mixedDeck.Push(_cards[randomIndex]);
 
-                mixedDeck.Push(temporaryCard);
-
-                _cards[randomIndex] = temporaryCard;
+                RemoveCard(_cards, _cards[randomIndex]);
             }
 
             return mixedDeck;
         }
 
+        private void RemoveCard(List<Card> cards, Card card)
+        {
+            cards.Remove(card);
+        }
+
         private int GetRandomIndex()
         {
             Random random = new Random();
-            int index = random.Next(0, _cards.Count - 1);
+            int index = random.Next(0, _cards.Count);
             return index;
         }
 
@@ -351,23 +364,28 @@ namespace OOP4_CardDeck
             List<Card> cards = new List<Card>();
 
             string[] cardNames = new string[] {"6", "7", "8", "9", "10", "J", "Q", "K", "A" };
-            char[] graySuits = new char[] { '♠', '♣' };
-            char[] redSuits = new char[] { '♥', '♦' };
+            char heartSuit = '♥';
+            char diamondSuit = '♦';
+            char spadeSuit = '♠';
+            char clubSuit = '♣';
 
             for (int i = 0; i < cardNames.Length; i++)
             {
-                for (int j = 0; j < graySuits.Length; j++)
-                {
-                    cards.Add(new Card(cardNames[i], graySuits[j], ConsoleColor.DarkGray));
-                }
+                AddSuitLine(cards, cardNames[i], heartSuit, ConsoleColor.DarkRed);
 
-                for (int j = 0; j < redSuits.Length; j++)
-                {
-                    cards.Add(new Card(cardNames[i], redSuits[j], ConsoleColor.DarkRed));
-                }
+                AddSuitLine(cards, cardNames[i], diamondSuit, ConsoleColor.DarkRed);
+
+                AddSuitLine(cards, cardNames[i], spadeSuit, ConsoleColor.DarkGray);
+
+                AddSuitLine(cards, cardNames[i], clubSuit, ConsoleColor.DarkGray);
             }
 
             return cards;
+        }
+
+        private void AddSuitLine(List<Card> cards, string name, char suit, ConsoleColor color)
+        {
+            cards.Add(new Card(name, suit, color));
         }
     }
 
