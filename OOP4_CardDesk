@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 
 namespace OOP4_CardDeck
 {
@@ -35,15 +36,9 @@ namespace OOP4_CardDeck
 
             ConsoleKeyInfo charKey = Console.ReadKey(true);
 
-            switch (charKey.Key)
-            {
-                case PressEscape:
-                    return false;
-                    break;
-                default:
-                    return true;
-                    break;
-            }
+            bool isESCPressed = charKey.Key == PressEscape ? false: true;
+            
+            return isESCPressed;
         }      
     }
 
@@ -65,7 +60,7 @@ namespace OOP4_CardDeck
         private int _playerScore = 0;
         private Player _enemy;
         private int _enemyScore = 0;
-        private Stack<Card> _mixedDeck = new Stack<Card>();
+        private List<Card> _mixedDeck;
         private int _scoreLimit = 21;
         private int _dangerScore = 11;
         private int _randomRange = 2;
@@ -81,6 +76,7 @@ namespace OOP4_CardDeck
 
         public void Play()
         {
+            
             Console.ReadKey();
 
             while (_isPlaying)
@@ -117,7 +113,9 @@ namespace OOP4_CardDeck
         {
             if (_player.CanTakeCard)
             {
-                _player.TakeCardToHand(_mixedDeck.Pop());
+                _player.TakeCardToHand(_mixedDeck[0]);
+
+                _mixedDeck.RemoveAt(0);
 
                 Console.WriteLine("Вы взяли карту.");
                 Console.ReadKey(true);
@@ -126,8 +124,7 @@ namespace OOP4_CardDeck
 
         private void DoTurn(Player enemy)
         {
-            Random random = new Random();
-            int enemyDecision = random.Next(0, _randomRange);
+            int enemyDecision = UserUtils.GenerateRandomNumber(0, _randomRange);
 
             if (_enemy.CanTakeCard && _enemyScore >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemyScore == _scoreLimit)
             {
@@ -135,7 +132,9 @@ namespace OOP4_CardDeck
             }
             else if (_enemy.CanTakeCard)
             {
-                _enemy.TakeCardToHand(_mixedDeck.Pop());
+                _enemy.TakeCardToHand(_mixedDeck[0]);
+
+                _mixedDeck.RemoveAt(0);
 
                 Console.WriteLine("Оппонент взял карту.");
                 Console.ReadKey(true);
@@ -322,41 +321,21 @@ namespace OOP4_CardDeck
             _cards = Fill();
         }
 
-        public void Show()
+        public List<Card> Mix()
         {
-            for (int i = 0; i < _cards.Count; i++)
-            {
-                _cards[i].Print();
-            }
-        }
-
-        public Stack<Card> Mix()
-        {
-            Stack<Card> mixedDeck = new Stack<Card>();
+            List<Card> mixedDeck = new List<Card>();
             int cardsCount = _cards.Count;
 
             for (int i = 0; i < cardsCount; i++)
             {
-                int randomIndex = GetRandomIndex();
+                int randomIndex = UserUtils.GenerateRandomNumber(0, _cards.Count);
 
-                mixedDeck.Push(_cards[randomIndex]);
+                mixedDeck.Add(_cards[randomIndex]);
 
-                RemoveCard(_cards, _cards[randomIndex]);
+                _cards.Remove(_cards[randomIndex]);
             }
 
             return mixedDeck;
-        }
-
-        private void RemoveCard(List<Card> cards, Card card)
-        {
-            cards.Remove(card);
-        }
-
-        private int GetRandomIndex()
-        {
-            Random random = new Random();
-            int index = random.Next(0, _cards.Count);
-            return index;
         }
 
         private List<Card> Fill()
@@ -407,6 +386,16 @@ namespace OOP4_CardDeck
             Console.ForegroundColor = Color;
             Console.Write($"{Symbol}{Suit}  ");
             Console.ResetColor();
+        }
+    }
+
+    class UserUtils
+    {
+        public static int GenerateRandomNumber(int min, int max)
+        {
+            Random random = new Random();
+            int number = random.Next(min, max);
+            return number;
         }
     }
 }
