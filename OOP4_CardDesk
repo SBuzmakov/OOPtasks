@@ -45,7 +45,7 @@ namespace OOP4_CardDeck
         private Dictionary<string, int> _cardsValues;
         private Player _player;
         private Player _enemy;
-        private List<Card> _mixedDeck;
+        private Deck36Cards _deck;
         private int _scoreLimit = 21;
         private int _dangerScore = 11;
         private int _randomRange = 2;
@@ -56,7 +56,7 @@ namespace OOP4_CardDeck
             _enemy = enemy;
             _player = player;
 
-            _mixedDeck = new Deck36Cards().Mix();
+            _deck = new Deck36Cards();
 
             _cardsValues = new Dictionary<string, int>()
             {
@@ -76,7 +76,13 @@ namespace OOP4_CardDeck
         {
             PrintRules();
 
+            _deck.Print();
+
+            _deck.Mix();
+
             Console.ReadKey();
+
+            Console.Clear();
 
             while (_isPlaying)
             {
@@ -102,7 +108,7 @@ namespace OOP4_CardDeck
 
         private void PrintRules()
         {
-            Console.WriteLine($"Наберите не больше {_scoreLimit} очка. Колода {_mixedDeck.Count} карт. \nКоличество очков за карты: \n");
+            Console.WriteLine($"Наберите не больше {_scoreLimit} очка. Колода {_deck.Cards.Count} карт. \nКоличество очков за карты: \n");
 
             foreach (KeyValuePair<string, int> card in _cardsValues)
             {
@@ -114,9 +120,9 @@ namespace OOP4_CardDeck
         {
             if (_player.CanTakeCard)
             {
-                _player.TakeCardToHand(_mixedDeck[0]);
+                _player.TakeCardToHand(_deck.Cards[0]);
 
-                _mixedDeck.RemoveAt(0);
+                _deck.Cards.RemoveAt(0);
 
                 Console.WriteLine("Вы взяли карту.");
                 Console.ReadKey(true);
@@ -127,15 +133,15 @@ namespace OOP4_CardDeck
         {
             int enemyDecision = UserUtils.GenerateRandomNumber(0, _randomRange);
 
-            if (_enemy.CanTakeCard && _enemy._score >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemy._score == _scoreLimit)
+            if (_enemy.CanTakeCard && _enemy.Score >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemy.Score == _scoreLimit)
             {
                 _enemy.BanTurn();
             }
             else if (_enemy.CanTakeCard)
             {
-                _enemy.TakeCardToHand(_mixedDeck[0]);
+                _enemy.TakeCardToHand(_deck.Cards[0]);
 
-                _mixedDeck.RemoveAt(0);
+                _deck.Cards.RemoveAt(0);
 
                 Console.WriteLine("Оппонент взял карту.");
                 Console.ReadKey(true);
@@ -165,6 +171,7 @@ namespace OOP4_CardDeck
                 case PressN:
                     _player.BanTurn();
                     break;
+
                 default:
                     Console.WriteLine("Ход пропущен");
                     break;
@@ -173,7 +180,7 @@ namespace OOP4_CardDeck
 
         private void SwitchScoreOverdone(Player player)
         {
-            if (player._score > _scoreLimit)
+            if (player.Score > _scoreLimit)
             {
                 player.BanTurn();
 
@@ -185,7 +192,7 @@ namespace OOP4_CardDeck
         {
             player.ShowHand();
 
-            Console.WriteLine($"Очки {player.Name}: {player._score}");
+            Console.WriteLine($"Очки {player.Name}: {player.Score}");
         }
 
         private void GetResult()
@@ -204,11 +211,11 @@ namespace OOP4_CardDeck
                 {
                     Console.WriteLine("Оба проиграли!");
                 }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone == false  && _player._score > _enemy._score)
+                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone == false  && _player.Score > _enemy.Score)
                 {
                     Console.WriteLine($"Победитель - {_player.Name}!");
                 }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone == false && _player._score < _enemy._score)
+                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone == false && _player.Score < _enemy.Score)
                 {
                     Console.WriteLine($"Победитель - {_enemy.Name}!");
                 }
@@ -220,7 +227,7 @@ namespace OOP4_CardDeck
                 {
                     Console.WriteLine($"Победитель - {_enemy.Name}!");
                 }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone && _player._score == _enemy._score)
+                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone && _player.Score == _enemy.Score)
                 {
                     Console.WriteLine($"Победитель - дружба. Ничья!");
                 }
@@ -258,14 +265,14 @@ namespace OOP4_CardDeck
             Name = name;
         }
 
-        public int _score { get; private set; } = 0;
+        public int Score { get; private set; } = 0;
         public bool IsScoreOverdone { get; private set; } = false;
         public bool CanTakeCard { get; private set; } = true;
         public string Name { get; private set; }
 
         public void SetScore(int score)
         {
-            _score = score;
+            Score = score;
         }
 
         public void TurnOnOverdoneStatus()
@@ -321,7 +328,6 @@ namespace OOP4_CardDeck
 
     class Deck36Cards
     {
-        private List<Card> _cards;
         private string[] _cardNames;
         private Dictionary<char, ConsoleColor> _suitsColors;
 
@@ -337,24 +343,33 @@ namespace OOP4_CardDeck
                 { '♣', ConsoleColor.DarkGray },
             };
 
-            _cards = Fill();
+            Cards = Fill();
         }
 
-        public List<Card> Mix()
+        public List<Card> Cards { get; private set; }
+
+        public void Mix()
         {
-            List<Card> mixedDeck = new List<Card>();
-            int cardsCount = _cards.Count;
+            int cardsCount = Cards.Count;
 
             for (int i = 0; i < cardsCount; i++)
             {
-                int randomIndex = UserUtils.GenerateRandomNumber(0, _cards.Count);
+                int randomIndex = UserUtils.GenerateRandomNumber(0, Cards.Count);
 
-                mixedDeck.Add(_cards[randomIndex]);
+                Card temporaryCard = Cards[i];
 
-                _cards.Remove(_cards[randomIndex]);
+                Cards[i] = Cards[randomIndex];
+
+                Cards[randomIndex] = temporaryCard;
             }
+        }
 
-            return mixedDeck;
+        public void Print()
+        {
+            for (int i = 0; i < Cards.Count; i++)
+            {
+                Cards[i].Print();
+            }
         }
 
         private List<Card> Fill()
@@ -370,11 +385,6 @@ namespace OOP4_CardDeck
             }
 
             return cards;
-        }
-
-        private void AddSuitLine(List<Card> cards, string name, char suit, ConsoleColor color)
-        {
-            cards.Add(new Card(name, suit, color));
         }
     }
 
@@ -401,10 +411,11 @@ namespace OOP4_CardDeck
 
     class UserUtils
     {
+        private static Random _random = new Random();
+
         public static int GenerateRandomNumber(int min, int max)
         {
-            Random random = new Random();
-            int number = random.Next(min, max);
+            int number = _random.Next(min, max);
             return number;
         }
     }
