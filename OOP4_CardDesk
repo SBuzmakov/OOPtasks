@@ -7,169 +7,72 @@ namespace OOP4_CardDeck
     {
         static void Main(string[] args)
         {
-            bool isWork = true;
+            Task task = new Task();
 
-            while (isWork)
-            {
-                Player player = new Player();
-                Player enemy = new Player("Оппонент");
-                Game21 game = new Game21(player, enemy);
-
-                game.Play();
-
-                isWork = CheckExitMenu();
-
-                Console.Clear();
-            }
-
-            Console.WriteLine("good luck!");
-            Console.ReadKey(true);
-        }
-
-        static bool CheckExitMenu()
-        {
-            const ConsoleKey PressEscape = ConsoleKey.Escape;
-
-            Console.WriteLine($"\n\nВыйти из игры?\n\n\tклавиша {PressEscape} - выйти из игры. \n\nДля продолжения - остальные клавиши.");
-
-            ConsoleKeyInfo charKey = Console.ReadKey(true);
-
-            bool isESCPressed = charKey.Key == PressEscape ? false: true;
-            
-            return isESCPressed;
-        }      
+            task.StartTask();
+        }  
     }
 
-    class Game21
+    class Task
     {
-        private Dictionary<string, int> _cardsValues;
-        private Player _player;
-        private Player _enemy;
-        private Deck36Cards _deck;
-        private int _scoreLimit = 21;
-        private int _dangerScore = 11;
-        private int _randomRange = 2;
-        private bool _isPlaying = true;
+        private Deck36  _deck = new Deck36();
+        private Player _player = new Player();
+        private bool _isWork = true;
 
-        public Game21(Player player, Player enemy)
+        public void StartTask()
         {
-            _enemy = enemy;
-            _player = player;
-
-            _deck = new Deck36Cards();
-
-            _cardsValues = new Dictionary<string, int>()
+            while (_isWork)
             {
-                { "6", 6 },
-                { "7", 7 },
-                { "8", 8 },
-                { "9", 9 },
-                { "10", 10 },
-                { "J", 2 },
-                { "Q", 3 },
-                { "K", 4 },
-                { "A", 11 }
-            };
-        }
+                _deck.Print();
 
-        public void Play()
-        {
-            PrintRules();
-
-            _deck.Print();
-
-            _deck.Mix();
-
-            Console.ReadKey();
-
-            Console.Clear();
-
-            while (_isPlaying)
-            {
                 _player.ShowHand();
 
-                ControlPlaying();
-
-                DoEnemyTurn();
-
-                CalculateScore(_player);
-
-                CalculateScore(_enemy);
-
-                SwitchScoreOverdone(_player);
-
-                SwitchScoreOverdone(_enemy);
-
-                GetResult();
+                Control();
 
                 Console.Clear();
             }
+
+            _player.ShowHand();
         }
 
-        private void PrintRules()
+        private void TakeCard()
         {
-            Console.WriteLine($"Наберите не больше {_scoreLimit} очка. Колода {_deck.Cards.Count} карт. \nКоличество очков за карты: \n");
-
-            foreach (KeyValuePair<string, int> card in _cardsValues)
+            if(_deck.CheckCardAvailability())
             {
-                Console.WriteLine($"карта {card.Key} - {card.Value} очков");
+                Card card = _deck.GetCard();
+
+                _player.AddCardToHand(card);
+
+                _deck.RemoveCard(card);
+            }
+            else
+            {
+                _isWork = false;
             }
         }
 
-        private void DoTurn()
-        {
-            if (_player.CanTakeCard)
-            {
-                _player.TakeCardToHand(_deck.Cards[0]);
-
-                _deck.Cards.RemoveAt(0);
-
-                Console.WriteLine("Вы взяли карту.");
-                Console.ReadKey(true);
-            }
-        }
-
-        private void DoEnemyTurn()
-        {
-            int enemyDecision = UserUtils.GenerateRandomNumber(0, _randomRange);
-
-            if (_enemy.CanTakeCard && _enemy.Score >= _dangerScore && enemyDecision == 0 || _enemy.CanTakeCard && _enemy.Score == _scoreLimit)
-            {
-                _enemy.BanTurn();
-            }
-            else if (_enemy.CanTakeCard)
-            {
-                _enemy.TakeCardToHand(_deck.Cards[0]);
-
-                _deck.Cards.RemoveAt(0);
-
-                Console.WriteLine("Оппонент взял карту.");
-                Console.ReadKey(true);
-            }
-        }
-
-        private void ControlPlaying()
+        private void Control()
         {
             const ConsoleKey PressY = ConsoleKey.Y;
             const ConsoleKey PressN = ConsoleKey.N;
-            const ConsoleKey PressE = ConsoleKey.E;
+            const ConsoleKey PressM = ConsoleKey.M;
 
-            Console.WriteLine($"\n\nВытянуть карту из колоды?\t{PressY} - вытянуть карту, {PressN} - пас, {PressE} - выйти из игры.");
+            Console.WriteLine($"\n\nВытянуть карту из колоды?\t{PressY} - вытянуть карту, {PressN} - пас, {PressM} - перемешать колоду.");
 
             ConsoleKeyInfo charKey = Console.ReadKey(true);
 
             switch (charKey.Key)
             {
-                case PressE:
-                    _isPlaying = false;
-                    break;
-
                 case PressY:
-                    DoTurn();
+                    TakeCard();
                     break;
 
                 case PressN:
-                    _player.BanTurn();
+                    _isWork = false;
+                    break;
+
+                case PressM:
+                    _deck.Mix();
                     break;
 
                 default:
@@ -177,122 +80,15 @@ namespace OOP4_CardDeck
                     break;
             }
         }
-
-        private void SwitchScoreOverdone(Player player)
-        {
-            if (player.Score > _scoreLimit)
-            {
-                player.BanTurn();
-
-                player.TurnOnOverdoneStatus();
-            }
-        }
-
-        private void PrintScore(Player player)
-        {
-            player.ShowHand();
-
-            Console.WriteLine($"Очки {player.Name}: {player.Score}");
-        }
-
-        private void GetResult()
-        {
-            if (_player.CanTakeCard == false && _enemy.CanTakeCard == false)
-            {
-                _isPlaying = false;
-
-                Console.Clear();
-
-                PrintScore(_player);
-
-                PrintScore(_enemy);
-
-                if (_player.IsScoreOverdone && _enemy.IsScoreOverdone)
-                {
-                    Console.WriteLine("Оба проиграли!");
-                }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone == false  && _player.Score > _enemy.Score)
-                {
-                    Console.WriteLine($"Победитель - {_player.Name}!");
-                }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone == false && _player.Score < _enemy.Score)
-                {
-                    Console.WriteLine($"Победитель - {_enemy.Name}!");
-                }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone)
-                {
-                    Console.WriteLine($"Победитель - {_player.Name}!");
-                }
-                else if (_player.IsScoreOverdone && _enemy.IsScoreOverdone == false)
-                {
-                    Console.WriteLine($"Победитель - {_enemy.Name}!");
-                }
-                else if (_player.IsScoreOverdone == false && _enemy.IsScoreOverdone && _player.Score == _enemy.Score)
-                {
-                    Console.WriteLine($"Победитель - дружба. Ничья!");
-                }
-
-                Console.ReadKey(true);
-            }
-        }
-
-        private void CalculateScore(Player player)
-        {
-            List<Card> hand = player.GetHand();
-
-            int score = 0;
-
-            for (int i = 0; i < hand.Count; i++)
-            {
-                score += _cardsValues[hand[i].Symbol];
-            }
-
-            player.SetScore(score);
-        }
     }
 
     class Player
     {
         private List<Card> _cardsHand = new List<Card>();
 
-        public Player()
-        {
-            Name = EnterName();
-        }
-
-        public Player(string name)
-        {
-            Name = name;
-        }
-
-        public int Score { get; private set; } = 0;
-        public bool IsScoreOverdone { get; private set; } = false;
-        public bool CanTakeCard { get; private set; } = true;
-        public string Name { get; private set; }
-
-        public void SetScore(int score)
-        {
-            Score = score;
-        }
-
-        public void TurnOnOverdoneStatus()
-        {
-            IsScoreOverdone = true;
-        }
-
-        public void BanTurn()
-        {
-            if (CanTakeCard)
-            {
-                CanTakeCard = false;
-                Console.WriteLine($"{Name} завершил партию.");
-                Console.ReadKey(true);
-            }
-        }
-
         public void ShowHand()
         {
-            Console.Write($"\nKарты {Name}:\t");
+            Console.Write($"\n взятые карты:\t");
 
             for (int i = 0; i < _cardsHand.Count; i++)
             {
@@ -300,38 +96,19 @@ namespace OOP4_CardDeck
             }
         }
 
-        public void TakeCardToHand(Card card)
+        public void AddCardToHand(Card card)
         {
             _cardsHand.Add(card);
         }
-
-        public List<Card> GetHand()
-        {
-            List<Card> hand = _cardsHand.ToList();
-
-            return hand;
-        }
-
-        private string EnterName()
-        {
-            string name = "";
-
-            while (name == "")
-            {
-                Console.Write("Введите ваше имя: ");
-                name = Console.ReadLine();
-            }
-
-            return name;
-        }
     }
 
-    class Deck36Cards
+    class Deck36
     {
         private string[] _cardNames;
         private Dictionary<char, ConsoleColor> _suitsColors;
+        private List<Card> _cards;
 
-        public Deck36Cards()
+        public Deck36()
         {
             _cardNames = new string[] { "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
 
@@ -343,36 +120,65 @@ namespace OOP4_CardDeck
                 { '♣', ConsoleColor.DarkGray },
             };
 
-            Cards = Fill();
+            _cards = Create();
         }
-
-        public List<Card> Cards { get; private set; }
 
         public void Mix()
         {
-            int cardsCount = Cards.Count;
+            int cardsCount = _cards.Count;
 
             for (int i = 0; i < cardsCount; i++)
             {
-                int randomIndex = UserUtils.GenerateRandomNumber(0, Cards.Count);
+                int randomIndex = UserUtils.GenerateRandomNumber(0, _cards.Count);
 
-                Card temporaryCard = Cards[i];
+                Card temporaryCard = _cards[i];
 
-                Cards[i] = Cards[randomIndex];
+                _cards[i] = _cards[randomIndex];
 
-                Cards[randomIndex] = temporaryCard;
+                _cards[randomIndex] = temporaryCard;
             }
         }
 
         public void Print()
         {
-            for (int i = 0; i < Cards.Count; i++)
+            for (int i = 0; i < _cards.Count; i++)
             {
-                Cards[i].Print();
+                _cards[i].Print();
+            }
+        }
+        public Card GetCard()
+        {
+            if (CheckCardAvailability())
+            {
+                return _cards[0];
+            }
+            else
+            {
+                return null;
             }
         }
 
-        private List<Card> Fill()
+        public bool CheckCardAvailability()
+        {
+            if (_cards.Count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                Console.WriteLine("Карты в колоде закончились!");
+
+                Console.ReadKey(true);
+
+                return false;
+            }
+        }
+        public void RemoveCard(Card card)
+        {
+            _cards.Remove(card);
+        }
+
+        private List<Card> Create()
         {
             List<Card> cards = new List<Card>();
 
@@ -411,12 +217,11 @@ namespace OOP4_CardDeck
 
     class UserUtils
     {
-        private static Random _random = new Random();
+        private static Random s_random = new Random();
 
         public static int GenerateRandomNumber(int min, int max)
         {
-            int number = _random.Next(min, max);
-            return number;
+            return s_random.Next(min, max);
         }
     }
 }
