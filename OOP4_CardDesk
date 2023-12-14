@@ -7,19 +7,19 @@ namespace OOP4_CardDeck
     {
         static void Main(string[] args)
         {
-            Task task = new Task();
+            Dealer dealer = new Dealer();
 
-            task.StartTask();
+            dealer.Play();
         }  
     }
 
-    class Task
+    class Dealer
     {
-        private Deck36  _deck = new Deck36();
+        private Deck  _deck = new Deck();
         private Player _player = new Player();
         private bool _isWork = true;
 
-        public void StartTask()
+        public void Play()
         {
             while (_isWork)
             {
@@ -35,9 +35,9 @@ namespace OOP4_CardDeck
             _player.ShowHand();
         }
 
-        private void TakeCard()
+        private void PassACard()
         {
-            if(_deck.CheckCardAvailability())
+            if(_deck.IsEmpty())
             {
                 Card card = _deck.GetCard();
 
@@ -64,7 +64,7 @@ namespace OOP4_CardDeck
             switch (charKey.Key)
             {
                 case PressY:
-                    TakeCard();
+                    PassACard();
                     break;
 
                 case PressN:
@@ -102,24 +102,12 @@ namespace OOP4_CardDeck
         }
     }
 
-    class Deck36
+    class Deck
     {
-        private string[] _cardNames;
-        private Dictionary<char, ConsoleColor> _suitsColors;
         private List<Card> _cards;
 
-        public Deck36()
+        public Deck()
         {
-            _cardNames = new string[] { "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
-
-            _suitsColors = new Dictionary<char, ConsoleColor>()
-            {
-                { '♥', ConsoleColor.DarkRed },
-                { '♦', ConsoleColor.DarkRed },
-                { '♠', ConsoleColor.DarkGray },
-                { '♣', ConsoleColor.DarkGray },
-            };
-
             _cards = Create();
         }
 
@@ -146,23 +134,24 @@ namespace OOP4_CardDeck
                 _cards[i].Print();
             }
         }
+
         public Card GetCard()
         {
-            if (CheckCardAvailability())
-            {
-                return _cards[0];
-            }
-            else
+            if (IsEmpty())
             {
                 return null;
             }
+            else
+            {
+                return _cards[0];
+            }
         }
 
-        public bool CheckCardAvailability()
+        public bool IsEmpty()
         {
             if (_cards.Count > 0)
             {
-                return true;
+                return false;
             }
             else
             {
@@ -170,7 +159,7 @@ namespace OOP4_CardDeck
 
                 Console.ReadKey(true);
 
-                return false;
+                return true;
             }
         }
         public void RemoveCard(Card card)
@@ -180,13 +169,23 @@ namespace OOP4_CardDeck
 
         private List<Card> Create()
         {
-            List<Card> cards = new List<Card>();
+            var cards = new List<Card>();
 
-            foreach  (KeyValuePair<char, ConsoleColor> suits in _suitsColors)
+            var cardNames = new string[] { "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
+
+            var suitsColors = new Dictionary<char, ConsoleColor>()
             {
-                for (int i = 0; i < _cardNames.Length; i++)
+                { '♥', ConsoleColor.DarkRed },
+                { '♦', ConsoleColor.DarkRed },
+                { '♠', ConsoleColor.DarkGray },
+                { '♣', ConsoleColor.DarkGray },
+            };
+
+            foreach  (KeyValuePair<char, ConsoleColor> suits in suitsColors)
+            {
+                for (int i = 0; i < cardNames.Length; i++)
                 {
-                    cards.Add(new Card(_cardNames[i], suits.Key, suits.Value));
+                    cards.Add(new Card(cardNames[i], suits.Key, suits.Value));
                 }
             }
 
