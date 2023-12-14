@@ -27,7 +27,7 @@ namespace OOP4_CardDeck
 
                 _player.ShowHand();
 
-                Control();
+                ControlMenu();
 
                 Console.Clear();
             }
@@ -39,19 +39,17 @@ namespace OOP4_CardDeck
         {
             if(_deck.IsEmpty())
             {
-                Card card = _deck.GetCard();
-
-                _player.AddCardToHand(card);
-
-                _deck.RemoveCard(card);
+                _isWork = false;
             }
             else
             {
-                _isWork = false;
+                Card card = _deck.GetCard();
+
+                _player.AddCardToHand(card);              
             }
         }
 
-        private void Control()
+        private void ControlMenu()
         {
             const ConsoleKey PressY = ConsoleKey.Y;
             const ConsoleKey PressN = ConsoleKey.N;
@@ -98,7 +96,14 @@ namespace OOP4_CardDeck
 
         public void AddCardToHand(Card card)
         {
-            _cardsHand.Add(card);
+            if(card == null)
+            {
+                return;
+            }
+            else
+            {
+                _cardsHand.Add(card);
+            }
         }
     }
 
@@ -143,7 +148,11 @@ namespace OOP4_CardDeck
             }
             else
             {
-                return _cards[0];
+                Card card = _cards[0];
+
+                RemoveCard(_cards[0]);
+
+                return card;
             }
         }
 
@@ -162,7 +171,8 @@ namespace OOP4_CardDeck
                 return true;
             }
         }
-        public void RemoveCard(Card card)
+
+        private void RemoveCard(Card card)
         {
             _cards.Remove(card);
         }
