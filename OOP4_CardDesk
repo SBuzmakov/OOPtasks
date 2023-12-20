@@ -27,7 +27,7 @@ namespace OOP4_CardDeck
 
                 _player.ShowHand();
 
-                ControlMenu();
+                ManageMenu();
 
                 Console.Clear();
             }
@@ -35,7 +35,7 @@ namespace OOP4_CardDeck
             _player.ShowHand();
         }
 
-        private void PassACard()
+        private void PassCard()
         {
             if(_deck.IsEmpty())
             {
@@ -43,33 +43,33 @@ namespace OOP4_CardDeck
             }
             else
             {
-                Card card = _deck.GetCard();
+                Card card = _deck.TakeCard();
 
                 _player.AddCardToHand(card);              
             }
         }
 
-        private void ControlMenu()
+        private void ManageMenu()
         {
-            const ConsoleKey PressY = ConsoleKey.Y;
-            const ConsoleKey PressN = ConsoleKey.N;
-            const ConsoleKey PressM = ConsoleKey.M;
+            const ConsoleKey CommandTakeCard = ConsoleKey.Y;
+            const ConsoleKey CommandPass = ConsoleKey.N;
+            const ConsoleKey CommandMixDeck = ConsoleKey.M;
 
-            Console.WriteLine($"\n\nВытянуть карту из колоды?\t{PressY} - вытянуть карту, {PressN} - пас, {PressM} - перемешать колоду.");
+            Console.WriteLine($"\n\nВытянуть карту из колоды?\t{CommandTakeCard} - вытянуть карту, {CommandPass} - пас, {CommandMixDeck} - перемешать колоду.");
 
             ConsoleKeyInfo charKey = Console.ReadKey(true);
 
             switch (charKey.Key)
             {
-                case PressY:
-                    PassACard();
+                case CommandTakeCard:
+                    PassCard();
                     break;
 
-                case PressN:
+                case CommandPass:
                     _isWork = false;
                     break;
 
-                case PressM:
+                case CommandMixDeck:
                     _deck.Mix();
                     break;
 
@@ -140,7 +140,7 @@ namespace OOP4_CardDeck
             }
         }
 
-        public Card GetCard()
+        public Card TakeCard()
         {
             if (IsEmpty())
             {
@@ -150,7 +150,7 @@ namespace OOP4_CardDeck
             {
                 Card card = _cards[0];
 
-                RemoveCard(_cards[0]);
+                RemoveCard(card);
 
                 return card;
             }
