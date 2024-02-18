@@ -1,0 +1,264 @@
+using System.Reflection;
+using System.Threading.Channels;
+
+namespace OOP5__BookStorage
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Storage storage = new Storage();
+
+            storage.Work();
+
+            Console.ReadKey();
+        }
+    }
+
+    class Book
+    {
+        public Book(string name, string author, int year, int id)
+        {
+            Name = name;
+            Author = author;
+            Year = year;
+            Id = id;
+        }
+
+        public string Name { get; private set; }
+        public string Author { get; private set; }
+        public int Year { get; private set; }
+        public int Id { get; set; }
+
+        public void Show()
+        {
+            Console.WriteLine($"{Id}. \"{Name}\", {Author}, {Year}");
+        }
+    }
+
+    class Storage
+    {
+        private List<Book> _books = new List<Book>();
+        private bool _isWork = true;
+        private int _currentId = 0;
+
+        public void Work()
+        {
+            while (_isWork)
+            {
+                Console.Clear();
+
+                Manage();
+
+                Console.ReadKey(true);
+            }
+        }
+
+        private void AddBook()
+        {
+            Console.Clear();
+
+            Console.WriteLine("Добавление книги.\n");
+            Book book = new Book(UserUtils.GetUserInput("Введите название книги:\t"), 
+                UserUtils.GetUserInput("Введите автора:\t"),
+                UserUtils.GetUserInputInt("Введите год издания: \t"),
+                _currentId);
+
+            _books.Add(book);
+
+            _currentId++;
+        }
+
+        private void RemoveBook()
+        {
+            PrintBooks(_books, 0, 1);
+
+            Console.SetCursorPosition(0, 0);
+
+            int userInput = UserUtils.GetUserInputInt("Введите номер книги для удаления: ");
+
+            foreach (Book book in _books)
+            {
+                if (book.Id == userInput)
+                {
+                    _books.Remove(book);
+
+                    break;
+                }
+            }
+        }
+
+        private void PrintBooks(List<Book> books, int positionX, int positionY)
+        {
+            Console.Clear();
+            Console.SetCursorPosition(positionX, positionY);
+
+            if (books.Count > 0)
+            {
+                for (int i = 0; i < books.Count; i++)
+                {
+                    books[i].Show();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Книги не найдены");
+            }
+        }
+
+        private void Manage()
+        {
+            const ConsoleKey CommandAddBook = ConsoleKey.A;
+            const ConsoleKey CommandExit = ConsoleKey.Escape;
+            const ConsoleKey CommandSearch = ConsoleKey.S;
+            const ConsoleKey CommandPrintAll = ConsoleKey.P;
+            const ConsoleKey CommandRemove = ConsoleKey.D;
+
+            Console.WriteLine($"Комманды:\n\nКлавиша {CommandAddBook} - добавить книгу\n\t{CommandSearch} - найти книгу\n\t{CommandPrintAll} - показать все книги" +
+                $"\n\t{CommandRemove} - удалить книгу\n\t{CommandExit} - выход из приложения");
+
+            ConsoleKeyInfo charKey = Console.ReadKey(true);
+
+            switch (charKey.Key)
+            {
+                case CommandAddBook:
+                    AddBook();
+                    break;
+
+                case CommandExit:
+                    _isWork = false;
+                    break;
+
+                case CommandSearch:
+                    ChooseSearching();
+                    break;
+
+                case CommandPrintAll:
+                    PrintBooks(_books, 0, 0);
+                    break;
+
+                case CommandRemove:
+                    RemoveBook();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void ChooseSearching()
+        {
+            const ConsoleKey CommandSearchAuthor = ConsoleKey.D1;
+            const ConsoleKey CommandSearchName = ConsoleKey.D2;
+            const ConsoleKey CommandSearchYear = ConsoleKey.D3;
+
+            Console.Clear();
+
+            Console.WriteLine($"Поиск книги.\n\nКомманды:\n\nКлавиша {CommandSearchAuthor} - поиск по автору\n\t{CommandSearchName} - поиск по названию" +
+                $"\n\t{CommandSearchYear} - поик по году");
+
+            ConsoleKeyInfo charKey = Console.ReadKey(true);
+
+            switch (charKey.Key)
+            {
+                case CommandSearchAuthor:
+                    SearchAuthor();
+                    break;
+
+                case CommandSearchName:
+                    SearchName();
+                    break;
+
+                case CommandSearchYear:
+                    SearchYear();
+                    break;
+
+                default:
+                    Console.WriteLine("такой комманды нет");
+                    break;
+            }
+        }
+
+        private void SearchAuthor()
+        {
+            string userInput = UserUtils.GetUserInput("Введите автора: ");
+
+            List<Book> foundBooks = new List<Book>();
+
+            foreach (Book book in _books)
+            {
+                if (book.Author.ToLower() == userInput.ToLower())
+                {
+                    foundBooks.Add(book);
+                }
+            }
+
+            PrintBooks(foundBooks, 0, 0);
+        }
+
+        private void SearchName()
+        {
+            string userInput = UserUtils.GetUserInput("Введите название книги: ");
+
+            List<Book> foundBooks = new List<Book>();
+
+            foreach (Book book in _books)
+            {
+                if (book.Name.ToLower() == userInput.ToLower())
+                {
+                    foundBooks.Add(book);
+                }
+            }
+
+            PrintBooks(foundBooks, 0, 0);
+        }
+
+        private void SearchYear()
+        {
+            int userInput = UserUtils.GetUserInputInt("Введите год издания: ");
+
+            List<Book> foundBooks = new List<Book>();
+
+            foreach (Book book in _books)
+            {
+                if (book.Year == userInput)
+                {
+                    foundBooks.Add(book);
+                }
+            }
+
+            PrintBooks(foundBooks, 0, 0);
+        }
+    }
+
+    class UserUtils
+    {
+        public static string GetUserInput(string text)
+        {
+            Console.Write(text);
+
+            return Console.ReadLine();
+        }
+
+        public static int GetUserInputInt(string text)
+        {
+            bool isNumber = false;
+            int parsedNumber = 0;
+
+            while (isNumber == false)
+            {
+                Console.Write(text);
+                string userInput = Console.ReadLine();
+                isNumber = int.TryParse(userInput, out parsedNumber);
+
+                if (isNumber == false)
+                {
+                    Console.WriteLine("Ошибка! Введите число");
+                    Console.ReadKey(true);
+                }
+            }
+
+            return parsedNumber;
+        }
+    }
+}
