@@ -1,0 +1,288 @@
+namespace OOP6_Shop2
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Work work = new Work();
+            
+            work.Play();
+        }
+    }
+
+    class Work
+    {
+        private Player _player = new Player();
+        private Shop _shop = new Shop();
+        private bool _isWork = true;
+
+        public void Play()
+        {
+            while (_isWork)
+            {
+                Manage();
+            }
+        }
+
+        private void DoShopping()
+        {
+            Console.Clear();
+
+            _shop.Show();
+
+            int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки");
+
+            MakeDeal(userInput);
+        }
+
+        private void MakeDeal(int id)
+        {
+            List<Shelf> shelves = _shop.GetShelves();
+            Item item = null;
+
+            foreach (Shelf shelf in shelves)
+            {
+                if (id == shelf.Id)
+                {
+                    item = shelf.GetItem();
+
+                    _player.Pay(item.Price);
+
+                    shelf.RemoveItem(item);
+
+                    _player.AddItem(item);
+
+                    break;
+                }
+            }
+        }
+
+        private void Manage()
+        {
+            const ConsoleKey CommandShowItems = ConsoleKey.D1;
+            const ConsoleKey CommandShowInventory = ConsoleKey.D2;
+            const ConsoleKey CommandExit = ConsoleKey.Escape;
+
+            Console.Clear() ;
+
+            Console.WriteLine($"введите команду: \n{CommandShowInventory} - показать ваш инвентарь\n{CommandShowItems} - показать товары магазина\n{CommandExit} - выход");
+
+            ConsoleKeyInfo charKey = Console.ReadKey(true);
+
+            switch (charKey.Key)
+            {
+                case CommandShowInventory:
+                    _player.ShowInventory();
+                    break;
+
+                case CommandShowItems:
+                    DoShopping();
+                    break;
+
+                case CommandExit:
+                    _isWork = false;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    class Player
+    {
+        private List<Item> _inventory = new List<Item>();
+        private int _cash = 1000;
+
+        public void Pay(int price)
+        {
+            _cash -= price;
+        }
+
+        public void AddItem(Item item)
+        {
+            _inventory.Add(item);
+        }
+
+        public void ShowInventory()
+        {
+            Console.Clear();
+            Console.WriteLine($"в наличии в вашем инвентаре:");
+
+            ShowCash();
+
+            foreach (Item item in _inventory)
+            {
+                item.Show();
+            }
+
+            Console.ReadLine();
+        }
+
+        public void ShowCash()
+        {
+            Console.WriteLine($"кошелёк: {_cash} деняк");
+        }
+    }
+
+    class Supplier
+    {
+        private static int s_breadPrice = 50;
+        private static int s_milkPrice = 100;
+        private static int s_cheesePrice = 150;
+        private static int s_sausagePrice = 200;
+        private Dictionary<string, int> _assortment = new Dictionary<string, int>()
+        {
+            {"bread", s_breadPrice },
+            {"milk", s_milkPrice },
+            {"cheese", s_cheesePrice },
+            {"sausages", s_sausagePrice }
+        };
+
+        public Dictionary<string, int> GetAssortment()
+        {
+            Dictionary<string, int> temporaryAssortment = new Dictionary<string, int>();
+            temporaryAssortment = _assortment;
+            return temporaryAssortment;
+        }
+    }
+
+    class Item
+    {
+        public Item(string name, int price)
+        {
+            Name = name;
+            Price = price;
+        }
+
+        public string Name { get; private set; }
+        public int Price { get; private set; }
+
+        public void Show()
+        {
+            Console.Write($"{Name}  {Price} деняк");
+        }
+    }
+
+    class Shelf
+    {
+        private List<Item> _items = new List<Item>();
+
+        public Shelf(int id, int size, Item item)
+        {
+            Id = id;
+            Size = size;
+            Item = item;
+
+            _items = Fill();
+
+            Left = _items.Count;
+        }
+
+        public int Id { get; private set; }
+        public int Left {  get; private set; }
+        public Item Item { get; private set; }
+        public int Size { get; private set; }
+
+        public void Show()
+        {
+            Console.Write($"{Id}  ");
+            Item.Show();
+            Console.WriteLine($"  {Left} шт.");
+        }
+
+        public Item GetItem()
+        {
+            Item item = new Item(null, 0);
+            item = _items[0];
+            return item;
+        }
+
+        public void RemoveItem(Item item)
+        {
+            _items.Remove(item);
+        }
+
+        private List<Item> Fill()
+        {
+            for (int i = 0; i < Size; i++)
+            {
+                _items.Add(Item);
+            }
+
+            return _items;
+        }
+    }
+
+    class Shop
+    {
+        private Supplier _supplier = new Supplier();
+        private int _shelfSize = 10;
+        private List<Shelf> _shelves = new List<Shelf>();
+
+        public Shop()
+        {
+            _shelves = Replenishment();
+        }
+
+        public void Show()
+        {
+            foreach (Shelf shelf in _shelves)
+            {
+                shelf.Show();
+            }
+        }
+
+        public List<Shelf> GetShelves()
+        {
+            List<Shelf> shelves = new List<Shelf>();
+            shelves = _shelves;
+            return shelves;
+        }
+
+        private List<Shelf> Replenishment()
+        {
+            List <Shelf> shelves = new List<Shelf>();
+            Dictionary<string, int> assortment = _supplier.GetAssortment();
+            int id = 1;
+
+            foreach (KeyValuePair<string, int> items in assortment)
+            {
+                Item item = new Item(items.Key, items.Value);
+
+                Shelf shelf = new Shelf(id, _shelfSize, item);
+
+                shelves.Add(shelf);
+
+                id++;
+            }
+
+            return shelves;
+        }
+    }
+
+    class UserUtils
+    {
+        public static int GetUserInputInt(string text)
+        {
+            bool isNumber = false;
+            int parsedNumber = 0;
+
+            while (isNumber == false)
+            {
+                Console.Write(text);
+                string userInput = Console.ReadLine();
+                isNumber = int.TryParse(userInput, out parsedNumber);
+
+                if (isNumber == false)
+                {
+                    Console.WriteLine("Ошибка! Введите число");
+                    Console.ReadKey(true);
+                }
+            }
+
+            return parsedNumber;
+        }
+    }
+
+ }
