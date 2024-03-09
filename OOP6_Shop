@@ -33,7 +33,7 @@ namespace OOP6_Shop2
 
             _shop.Show();
 
-            Console.WriteLine($"{CommandExit} - выйти из магазина без покупок");
+            Console.WriteLine($"{CommandExit} - выйти из магазина без покупок\n");
 
             int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки: ");
 
@@ -168,28 +168,6 @@ namespace OOP6_Shop2
         }
     }
 
-    class Supplier
-    {
-        private static int s_breadPrice = 50;
-        private static int s_milkPrice = 100;
-        private static int s_cheesePrice = 150;
-        private static int s_sausagePrice = 200;
-        private Dictionary<string, int> _assortment = new Dictionary<string, int>()
-        {
-            {"bread", s_breadPrice },
-            {"milk", s_milkPrice },
-            {"cheese", s_cheesePrice },
-            {"sausages", s_sausagePrice }
-        };
-
-        public Dictionary<string, int> GetAssortment()
-        {
-            Dictionary<string, int> temporaryAssortment = new Dictionary<string, int>();
-            temporaryAssortment = _assortment;
-            return temporaryAssortment;
-        }
-    }
-
     class Item
     {
         public Item(string name, int price)
@@ -270,9 +248,19 @@ namespace OOP6_Shop2
 
     class Shop
     {
-        private Supplier _supplier = new Supplier();
+        private static int s_breadPrice = 50;
+        private static int s_milkPrice = 100;
+        private static int s_cheesePrice = 150;
+        private static int s_sausagePrice = 200;
         private int _shelfSize = 10;
         private List<Shelf> _shelves = new List<Shelf>();
+        private Dictionary<string, int> _assortment = new Dictionary<string, int>()
+        {
+            {"bread", s_breadPrice },
+            {"milk", s_milkPrice },
+            {"cheese", s_cheesePrice },
+            {"sausages", s_sausagePrice }
+        };
 
         public Shop()
         {
@@ -302,18 +290,16 @@ namespace OOP6_Shop2
 
         public List<Shelf> GetShelves()
         {
-            List<Shelf> shelves = new List<Shelf>();
-            shelves = _shelves;
+            List<Shelf> shelves = new List<Shelf>(_shelves);
             return shelves;
         }
 
         private List<Shelf> Replenishment()
         {
             List <Shelf> shelves = new List<Shelf>();
-            Dictionary<string, int> assortment = _supplier.GetAssortment();
             int id = 1;
 
-            foreach (KeyValuePair<string, int> items in assortment)
+            foreach (KeyValuePair<string, int> items in _assortment)
             {
                 Item item = new Item(items.Key, items.Value);
 
@@ -351,5 +337,4 @@ namespace OOP6_Shop2
             return parsedNumber;
         }
     }
-
  }
