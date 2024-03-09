@@ -12,9 +12,10 @@ namespace OOP6_Shop2
 
     class Work
     {
-        private Player _player = new Player();
+        private Player _player = new Player(1000);
         private Shop _shop = new Shop();
         private bool _isWork = true;
+        private const ConsoleKey CommandExit = ConsoleKey.D0;
 
         public void Play()
         {
@@ -28,44 +29,66 @@ namespace OOP6_Shop2
         {
             Console.Clear();
 
+            _player.ShowCash();
+
             _shop.Show();
 
-            int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки");
+            Console.WriteLine($"{CommandExit} - выйти из магазина без покупок");
+
+            int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки: ");
 
             MakeDeal(userInput);
         }
 
         private void MakeDeal(int id)
         {
+            if(id == 0)
+            {
+                return;
+            }
+               
+            Item item = FindItem(id);
+
+            if(item == null)
+            {
+                return;
+            }
+
+            if(_player.IsEnoughCash(item.Price))
+            {
+                _player.Pay(item.Price);
+
+                _shop.DecreaseShelf(id);
+
+                _player.AddItem(item);
+            }
+        }
+
+        private Item FindItem(int id)
+        {
             List<Shelf> shelves = _shop.GetShelves();
             Item item = null;
 
             foreach (Shelf shelf in shelves)
             {
-                if (id == shelf.Id)
+                if (id == shelf.Id && shelf.IsEnoughItem())
                 {
                     item = shelf.GetItem();
-
-                    _player.Pay(item.Price);
-
-                    shelf.RemoveItem(item);
-
-                    _player.AddItem(item);
-
-                    break;
                 }
             }
+
+            return item;
         }
 
         private void Manage()
         {
             const ConsoleKey CommandShowItems = ConsoleKey.D1;
             const ConsoleKey CommandShowInventory = ConsoleKey.D2;
-            const ConsoleKey CommandExit = ConsoleKey.Escape;
+            const ConsoleKey FinishWork = ConsoleKey.Escape;
 
             Console.Clear() ;
 
-            Console.WriteLine($"введите команду: \n{CommandShowInventory} - показать ваш инвентарь\n{CommandShowItems} - показать товары магазина\n{CommandExit} - выход");
+            Console.WriteLine($"введите команду: \n{CommandShowItems} - показать товары магазина\n{CommandShowInventory} -показать ваш инвентарь\n{FinishWork} - выход");
 
             ConsoleKeyInfo charKey = Console.ReadKey(true);
 
@@ -79,7 +102,7 @@ namespace OOP6_Shop2
                     DoShopping();
                     break;
 
-                case CommandExit:
+                case FinishWork:
                     _isWork = false;
                     break;
 
@@ -92,11 +115,31 @@ namespace OOP6_Shop2
     class Player
     {
         private List<Item> _inventory = new List<Item>();
-        private int _cash = 1000;
+
+        public Player(int cash)
+        {
+            Cash = cash;
+        }
+
+        public int Cash { get; private set; }
+
+        public bool IsEnoughCash(int price)
+        {
+            if (Cash >= price)
+            {
+                return true;
+            }
+            else
+            {
+                Console.WriteLine($"Не хватает {price - Cash} деняк!");
+                Console.ReadLine();
+                return false;
+            }
+        }
 
         public void Pay(int price)
         {
-            _cash -= price;
+            Cash -= price;
         }
 
         public void AddItem(Item item)
@@ -121,7 +164,7 @@ namespace OOP6_Shop2
 
         public void ShowCash()
         {
-            Console.WriteLine($"кошелёк: {_cash} деняк");
+            Console.WriteLine($"ваш кошелёк: {Cash} деняк\n");
         }
     }
 
@@ -160,7 +203,7 @@ namespace OOP6_Shop2
 
         public void Show()
         {
-            Console.Write($"{Name}  {Price} деняк");
+            Console.WriteLine($"{Name}  {Price} деняк");
         }
     }
 
@@ -175,12 +218,9 @@ namespace OOP6_Shop2
             Item = item;
 
             _items = Fill();
-
-            Left = _items.Count;
         }
 
         public int Id { get; private set; }
-        public int Left {  get; private set; }
         public Item Item { get; private set; }
         public int Size { get; private set; }
 
@@ -188,7 +228,7 @@ namespace OOP6_Shop2
         {
             Console.Write($"{Id}  ");
             Item.Show();
-            Console.WriteLine($"  {Left} шт.");
+            Console.WriteLine($"  {_items.Count} шт. осталось\n");
         }
 
         public Item GetItem()
@@ -198,9 +238,9 @@ namespace OOP6_Shop2
             return item;
         }
 
-        public void RemoveItem(Item item)
+        public void RemoveItem()
         {
-            _items.Remove(item);
+            _items.RemoveAt(0);
         }
 
         private List<Item> Fill()
@@ -211,6 +251,20 @@ namespace OOP6_Shop2
             }
 
             return _items;
+        }
+
+        public bool IsEnoughItem()
+        {
+            if (_items.Count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                Console.WriteLine("Товар закончился");
+                Console.ReadLine();
+                return false;
+            }
         }
     }
 
@@ -230,6 +284,19 @@ namespace OOP6_Shop2
             foreach (Shelf shelf in _shelves)
             {
                 shelf.Show();
+            }
+        }
+
+        public void DecreaseShelf(int id)
+        {
+            foreach (Shelf shelf in _shelves)
+            {
+                if(id == shelf.Id)
+                {
+                    shelf.RemoveItem();
+
+                    break;
+                }
             }
         }
 
