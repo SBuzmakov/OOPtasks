@@ -290,8 +290,7 @@ namespace OOP6_Shop2
 
         public List<Shelf> GetShelves()
         {
-            List<Shelf> shelves = new List<Shelf>(_shelves);
-            return shelves;
+            return new List<Shelf>(_shelves);
         }
 
         private List<Shelf> Replenishment()
