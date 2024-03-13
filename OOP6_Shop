@@ -1,19 +1,172 @@
-namespace OOP6_Shop2
+using System.Data;
+
+namespace OOP6_Shop3
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Work work = new Work();
-            
-            work.Play();
+            Shop shop = new Shop();
+
+            shop.Play();
         }
     }
 
-    class Work
+    class Person
+    {
+        protected List<Product> Products = new List<Product>();
+
+        public Person(string name, int balance)
+        {
+            Balance = balance;
+            Name = name;
+        }
+
+        public int Balance { get; protected set; }
+        public string Name { get; protected set; }
+
+        public void ShowBalance()
+        {
+            Console.WriteLine($"{Name}: денежный баланс: {Balance}");
+        }
+
+        protected void RecalculateBalance(int price)
+        {
+            Balance += price;
+        }
+    }
+
+    class Seller: Person
+    {
+        private Dictionary<string, int> _assortment = new Dictionary<string, int>() { { "хлеб", 50 },{"молоко", 100 },{"сыр", 150 },{"колбаса", 200 }, {"сырок б.ю. александров", 1000000} };
+
+        public Seller(int balance) : base("продавец", balance) 
+        {
+            Products = FillProducts();
+        }
+
+        public void ShowInfo()
+        {
+            Console.Clear();
+
+            ShowBalance();
+
+            foreach (Product product in Products)
+            {
+                product.ShowInfo();
+            }
+
+            Console.ReadLine();
+        }
+
+        public bool TryGetProduct(int id, out Product product)
+        {
+            foreach (Product item in Products)
+            {
+                if (item.Id == id)
+                {
+                    product = item;
+                    return true;
+                }
+            }
+
+            Console.WriteLine("Товар не найден.");
+            Console.ReadLine();
+            product = null;
+            return false;
+        }
+
+        public void SellProduct(int id, Product product)
+        {
+            RecalculateBalance(product.Price);
+
+            Products.Remove(product);
+        }
+
+        private List<Product> FillProducts()
+        {
+            int id = 1;
+            List<Product> products = new List<Product>();
+
+            foreach ( KeyValuePair<string, int> assortment in _assortment)
+            {
+                Product product = new Product(id, assortment.Key, assortment.Value);
+                products.Add(product);
+                id++;
+            }
+
+            return products;
+        }       
+    }
+
+    class Player: Person
+    {
+        public Player(int balance) : base("Игрок", balance) { }
+
+        public void ShowInfo()
+        {
+            Console.Clear();
+
+            ShowBalance();
+
+            foreach (Product product in Products)
+            {
+                product.ShowName();
+            }
+
+            Console.ReadLine();
+        }
+
+        public void BuyItem(Product product)
+        {
+            RecalculateBalance(-product.Price);
+
+            Products.Add(product);
+        }
+
+        public bool IsEnoughMoney(int price)
+        {
+            if (Balance >= price)
+            {
+                return true;
+            }
+            else
+            {
+                Console.WriteLine($"Не хватает {price - Balance} для покупки!");
+                Console.ReadLine();
+                return false;
+            }
+        }
+    }
+
+    class Product
+    {
+        public Product(int id, string name, int price)
+        {
+            Id = id;
+            Name = name;
+            Price = price;
+        }
+
+        public int Id { get; private set; }
+        public string Name { get; private set; }
+        public int Price { get; private set;}
+
+        public void ShowInfo()
+        {
+            Console.WriteLine($"{Id} {Name} {Price}");
+        }
+
+        public void ShowName()
+        {
+            Console.WriteLine(Name);
+        }
+    }
+
+    class Shop
     {
         private Player _player = new Player(1000);
-        private Shop _shop = new Shop();
+        private Seller _seller = new Seller(0);
         private bool _isWork = true;
         private const ConsoleKey CommandExit = ConsoleKey.D0;
 
@@ -25,68 +178,13 @@ namespace OOP6_Shop2
             }
         }
 
-        private void DoShopping()
-        {
-            Console.Clear();
-
-            _player.ShowCash();
-
-            _shop.Show();
-
-            Console.WriteLine($"{CommandExit} - выйти из магазина без покупок\n");
-
-            int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки: ");
-
-            MakeDeal(userInput);
-        }
-
-        private void MakeDeal(int id)
-        {
-            if(id == 0)
-            {
-                return;
-            }
-               
-            Item item = FindItem(id);
-
-            if(item == null)
-            {
-                return;
-            }
-
-            if(_player.IsEnoughCash(item.Price))
-            {
-                _player.Pay(item.Price);
-
-                _shop.DecreaseShelf(id);
-
-                _player.AddItem(item);
-            }
-        }
-
-        private Item FindItem(int id)
-        {
-            List<Shelf> shelves = _shop.GetShelves();
-            Item item = null;
-
-            foreach (Shelf shelf in shelves)
-            {
-                if (id == shelf.Id && shelf.IsEnoughItem())
-                {
-                    item = shelf.GetItem();
-                }
-            }
-
-            return item;
-        }
-
         private void Manage()
         {
             const ConsoleKey CommandShowItems = ConsoleKey.D1;
             const ConsoleKey CommandShowInventory = ConsoleKey.D2;
             const ConsoleKey FinishWork = ConsoleKey.Escape;
 
-            Console.Clear() ;
+            Console.Clear();
 
             Console.WriteLine($"введите команду: \n{CommandShowItems} - показать товары магазина\n{CommandShowInventory} -показать ваш инвентарь\n{FinishWork} - выход");
 
@@ -95,7 +193,7 @@ namespace OOP6_Shop2
             switch (charKey.Key)
             {
                 case CommandShowInventory:
-                    _player.ShowInventory();
+                    _player.ShowInfo();
                     break;
 
                 case CommandShowItems:
@@ -110,206 +208,36 @@ namespace OOP6_Shop2
                     break;
             }
         }
-    }
-
-    class Player
-    {
-        private List<Item> _inventory = new List<Item>();
-
-        public Player(int cash)
+        private void DoShopping()
         {
-            Cash = cash;
-        }
+            ConsoleKey CommandExit = ConsoleKey.D0;
 
-        public int Cash { get; private set; }
-
-        public bool IsEnoughCash(int price)
-        {
-            if (Cash >= price)
-            {
-                return true;
-            }
-            else
-            {
-                Console.WriteLine($"Не хватает {price - Cash} деняк!");
-                Console.ReadLine();
-                return false;
-            }
-        }
-
-        public void Pay(int price)
-        {
-            Cash -= price;
-        }
-
-        public void AddItem(Item item)
-        {
-            _inventory.Add(item);
-        }
-
-        public void ShowInventory()
-        {
             Console.Clear();
-            Console.WriteLine($"в наличии в вашем инвентаре:");
 
-            ShowCash();
+            _player.ShowBalance();
 
-            foreach (Item item in _inventory)
+            _seller.ShowInfo();
+
+            Console.WriteLine($"{CommandExit} - выйти из магазина без покупок\n");
+
+            int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки: ");
+
+            MakeDeal(userInput);
+        }
+
+        private void MakeDeal(int userInput)
+        {
+            if (userInput == 0)
+                return;
+
+            Product product = null;
+
+            if (_seller.TryGetProduct(userInput, out product) && _player.IsEnoughMoney(product.Price))
             {
-                item.Show();
+                _seller.SellProduct(userInput, product);
+
+                _player.BuyItem(product);
             }
-
-            Console.ReadLine();
-        }
-
-        public void ShowCash()
-        {
-            Console.WriteLine($"ваш кошелёк: {Cash} деняк\n");
-        }
-    }
-
-    class Item
-    {
-        public Item(string name, int price)
-        {
-            Name = name;
-            Price = price;
-        }
-
-        public string Name { get; private set; }
-        public int Price { get; private set; }
-
-        public void Show()
-        {
-            Console.WriteLine($"{Name}  {Price} деняк");
-        }
-    }
-
-    class Shelf
-    {
-        private List<Item> _items = new List<Item>();
-
-        public Shelf(int id, int size, Item item)
-        {
-            Id = id;
-            Size = size;
-            Item = item;
-
-            _items = Fill();
-        }
-
-        public int Id { get; private set; }
-        public Item Item { get; private set; }
-        public int Size { get; private set; }
-
-        public void Show()
-        {
-            Console.Write($"{Id}  ");
-            Item.Show();
-            Console.WriteLine($"  {_items.Count} шт. осталось\n");
-        }
-
-        public Item GetItem()
-        {
-            Item item = new Item(null, 0);
-            item = _items[0];
-            return item;
-        }
-
-        public void RemoveItem()
-        {
-            _items.RemoveAt(0);
-        }
-
-        private List<Item> Fill()
-        {
-            for (int i = 0; i < Size; i++)
-            {
-                _items.Add(Item);
-            }
-
-            return _items;
-        }
-
-        public bool IsEnoughItem()
-        {
-            if (_items.Count > 0)
-            {
-                return true;
-            }
-            else
-            {
-                Console.WriteLine("Товар закончился");
-                Console.ReadLine();
-                return false;
-            }
-        }
-    }
-
-    class Shop
-    {
-        private static int s_breadPrice = 50;
-        private static int s_milkPrice = 100;
-        private static int s_cheesePrice = 150;
-        private static int s_sausagePrice = 200;
-        private int _shelfSize = 10;
-        private List<Shelf> _shelves = new List<Shelf>();
-        private Dictionary<string, int> _assortment = new Dictionary<string, int>()
-        {
-            {"bread", s_breadPrice },
-            {"milk", s_milkPrice },
-            {"cheese", s_cheesePrice },
-            {"sausages", s_sausagePrice }
-        };
-
-        public Shop()
-        {
-            _shelves = Replenishment();
-        }
-
-        public void Show()
-        {
-            foreach (Shelf shelf in _shelves)
-            {
-                shelf.Show();
-            }
-        }
-
-        public void DecreaseShelf(int id)
-        {
-            foreach (Shelf shelf in _shelves)
-            {
-                if(id == shelf.Id)
-                {
-                    shelf.RemoveItem();
-
-                    break;
-                }
-            }
-        }
-
-        public List<Shelf> GetShelves()
-        {
-            return new List<Shelf>(_shelves);
-        }
-
-        private List<Shelf> Replenishment()
-        {
-            List <Shelf> shelves = new List<Shelf>();
-            int id = 1;
-
-            foreach (KeyValuePair<string, int> items in _assortment)
-            {
-                Item item = new Item(items.Key, items.Value);
-
-                Shelf shelf = new Shelf(id, _shelfSize, item);
-
-                shelves.Add(shelf);
-
-                id++;
-            }
-
-            return shelves;
         }
     }
 
@@ -336,4 +264,4 @@ namespace OOP6_Shop2
             return parsedNumber;
         }
     }
- }
+}
