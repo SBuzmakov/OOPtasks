@@ -28,21 +28,14 @@ namespace OOP6_Shop3
         public void ShowBalance()
         {
             Console.WriteLine($"{Name}: денежный баланс: {Balance}");
-        }
-
-        protected void RecalculateBalance(int price)
-        {
-            Balance += price;
-        }
+        }       
     }
 
     class Seller: Person
     {
-        private Dictionary<string, int> _assortment = new Dictionary<string, int>() { { "хлеб", 50 },{"молоко", 100 },{"сыр", 150 },{"колбаса", 200 }, {"сырок б.ю. александров", 1000000} };
-
         public Seller(int balance) : base("продавец", balance) 
         {
-            Products = FillProducts();
+            Products = [new Product(1, "хлеб", 50), new Product(2, "молоко", 100), new Product(3, "сыр", 150), new Product(4, "сырок БЮАлександров", 50000)];
         }
 
         public void ShowInfo()
@@ -76,27 +69,17 @@ namespace OOP6_Shop3
             return false;
         }
 
-        public void SellProduct(int id, Product product)
+        public void SellProduct(Product product)
         {
-            RecalculateBalance(product.Price);
+            IncreaseBalance(product.Price);
 
             Products.Remove(product);
         }
 
-        private List<Product> FillProducts()
+        private void IncreaseBalance(int price)
         {
-            int id = 1;
-            List<Product> products = new List<Product>();
-
-            foreach ( KeyValuePair<string, int> assortment in _assortment)
-            {
-                Product product = new Product(id, assortment.Key, assortment.Value);
-                products.Add(product);
-                id++;
-            }
-
-            return products;
-        }       
+            Balance += price;
+        }     
     }
 
     class Player: Person
@@ -111,7 +94,7 @@ namespace OOP6_Shop3
 
             foreach (Product product in Products)
             {
-                product.ShowName();
+                Console.WriteLine(product.Name);
             }
 
             Console.ReadLine();
@@ -119,7 +102,7 @@ namespace OOP6_Shop3
 
         public void BuyItem(Product product)
         {
-            RecalculateBalance(-product.Price);
+            DecreaseBalance(product.Price);
 
             Products.Add(product);
         }
@@ -136,6 +119,11 @@ namespace OOP6_Shop3
                 Console.ReadLine();
                 return false;
             }
+        }
+
+        private void DecreaseBalance(int price)
+        {
+            Balance -= price;
         }
     }
 
@@ -156,29 +144,25 @@ namespace OOP6_Shop3
         {
             Console.WriteLine($"{Id} {Name} {Price}");
         }
-
-        public void ShowName()
-        {
-            Console.WriteLine(Name);
-        }
     }
 
     class Shop
     {
         private Player _player = new Player(1000);
         private Seller _seller = new Seller(0);
-        private bool _isWork = true;
         private const ConsoleKey CommandExit = ConsoleKey.D0;
 
         public void Play()
         {
-            while (_isWork)
+            bool isWork = true;
+
+            while (isWork)
             {
-                Manage();
+                Manage(ref isWork);
             }
         }
 
-        private void Manage()
+        private void Manage(ref bool isWork)
         {
             const ConsoleKey CommandShowItems = ConsoleKey.D1;
             const ConsoleKey CommandShowInventory = ConsoleKey.D2;
@@ -197,44 +181,30 @@ namespace OOP6_Shop3
                     break;
 
                 case CommandShowItems:
-                    DoShopping();
+                    MakeDeal();
                     break;
 
                 case FinishWork:
-                    _isWork = false;
-                    break;
-
-                default:
+                    isWork = false;
                     break;
             }
         }
-        private void DoShopping()
-        {
-            ConsoleKey CommandExit = ConsoleKey.D0;
 
+        private void MakeDeal()
+        {
             Console.Clear();
 
             _player.ShowBalance();
 
             _seller.ShowInfo();
 
-            Console.WriteLine($"{CommandExit} - выйти из магазина без покупок\n");
-
-            int userInput = UserUtils.GetUserInputInt("введите номер товара для покупки: ");
-
-            MakeDeal(userInput);
-        }
-
-        private void MakeDeal(int userInput)
-        {
-            if (userInput == 0)
-                return;
-
             Product product = null;
+
+            int userInput = UserUtils.TryParse("введите номер товара для покупки: ");
 
             if (_seller.TryGetProduct(userInput, out product) && _player.IsEnoughMoney(product.Price))
             {
-                _seller.SellProduct(userInput, product);
+                _seller.SellProduct(product);
 
                 _player.BuyItem(product);
             }
@@ -243,23 +213,13 @@ namespace OOP6_Shop3
 
     class UserUtils
     {
-        public static int GetUserInputInt(string text)
+        public static int TryParse(string text)
         {
-            bool isNumber = false;
             int parsedNumber = 0;
 
-            while (isNumber == false)
-            {
-                Console.Write(text);
-                string userInput = Console.ReadLine();
-                isNumber = int.TryParse(userInput, out parsedNumber);
-
-                if (isNumber == false)
-                {
-                    Console.WriteLine("Ошибка! Введите число");
-                    Console.ReadKey(true);
-                }
-            }
+            Console.Write(text);
+            string userInput = Console.ReadLine();
+            bool isNumber = int.TryParse(userInput, out parsedNumber);
 
             return parsedNumber;
         }
