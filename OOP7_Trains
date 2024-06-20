@@ -19,38 +19,18 @@ namespace OOO7_TRAIN
     {
         private List<Carriage> _carriages = new List<Carriage>();
         
-        public Train(string departurePoint, string arrivingPoint, int passengersAmount, int number)
+        public Train(List<Carriage> carriages, string direction, int passengersAmount, int number)
         {
-            DeparturePoint = departurePoint;
-            ArrivingPoint = arrivingPoint;
+            Direction = direction;
             PassengersAmount = passengersAmount;
             Number = number;
-            _carriages = Fill();
+            _carriages = carriages;
         }
 
-        public string DeparturePoint { get; private set; }
-        public string ArrivingPoint { get; private set; }
+        public string Direction { get; private set; }
         public int PassengersAmount {  get; private set; }
         public int Number { get; private set; }
         public bool IsSent { get; private set; } = false;
-
-
-        public List<Carriage> Fill()
-        {
-            List<Carriage> carriages = new List<Carriage>();
-            int passengersLeft = PassengersAmount;
-
-            while(passengersLeft > 0)
-            {
-                Carriage carriage = new Carriage();
-
-                carriages.Add(carriage);
-
-                passengersLeft -= carriage.SeatsAmount;
-            }
-
-            return carriages;
-        }
 
         public void ShowInfo()
         {
@@ -63,7 +43,7 @@ namespace OOO7_TRAIN
                 Console.ForegroundColor= ConsoleColor.Yellow;
             }
 
-            Console.WriteLine($"{Number} {DeparturePoint} - {ArrivingPoint}. {_carriages.Count} вагонов / {PassengersAmount} пассажиров");
+            Console.WriteLine($"{Number} {Direction}. {_carriages.Count} вагонов / {PassengersAmount} пассажиров");
 
             Console.ResetColor();
         }
@@ -74,36 +54,42 @@ namespace OOO7_TRAIN
         }
     }
 
-    class RailwayService
+    class Direction
     {
         private List<string> _cities = new List<string>() { "Санкт-Петербург", "Москва", "Сочи", "Казань", "Мурманск", "Великий Новгрод" };
 
-        public int GetPassengers()
+        public string ChooseCities()
         {
-            Random random = new Random();
-            return random.Next(0, int.MaxValue);
-        }
-
-        public void ChooseCities(out string departureCity, out string arrivingCity)
-        {
-            departureCity = GetCity("Введите город отправления:");
+            string departureCity = GetCity("Введите город отправления:");
 
             _cities.Remove(departureCity);
 
             Console.Clear();
 
-            arrivingCity = GetCity("Введите город прибытия:");
+            string arrivingCity = GetCity("Введите город прибытия:");
             
             Console.Clear();
+
+            return  departureCity + " - " +  arrivingCity;
         }
 
         private string GetCity(string text)
         {
             ShowCities();
 
-            int userInput = UserUtils.TryParse(text);
+            int userInput = -1;
+
+            while (isCityExist(userInput) == false)
+            {
+                userInput = UserUtils.GetUserInputInt(text);
+            }
 
             return _cities[userInput];
+        }
+
+        private bool isCityExist(int userInput)
+        {
+            return userInput >= 0 && userInput <= _cities.Count - 1;
         }
 
         private void ShowCities()
@@ -187,29 +173,70 @@ namespace OOO7_TRAIN
             string arrivingCity;
             int passengersAmount;
 
-            RailwayService railwayService = new RailwayService();
+            Direction direction = new Direction();
 
-            railwayService.ChooseCities(out departureCity, out arrivingCity);
+            string directions = direction.ChooseCities();
 
-            passengersAmount = railwayService.GetPassengers();
+            passengersAmount = GetPassengers();
 
-            Train train = new Train(departureCity, arrivingCity, passengersAmount, _trainNumber);
+            List<Carriage> carriages = GetCarriages(passengersAmount);
+
+            Train train = new Train(carriages, directions, passengersAmount, _trainNumber);
 
             _trainNumber++;
 
             return train;
         }
+
+        private int GetPassengers()
+        {
+            return UserUtils.GenerateRandomNumber(0, int.MaxValue);
+        }
+
+        private List<Carriage> GetCarriages(int passengers)
+        {
+            List<Carriage> carriages = new List<Carriage>();
+            int passengersLeft = passengers;
+
+            while (passengersLeft > 0)
+            {
+                Carriage carriage = new Carriage();
+
+                carriages.Add(carriage);
+
+                passengersLeft -= carriage.SeatsAmount;
+            }
+
+            return carriages;
+        }
     }
 
     class UserUtils
     {
-        public static int TryParse(string text)
-        {
-            int parsedNumber;
+        private static Random s_random = new Random();
 
-            Console.Write(text);
-            string userInput = Console.ReadLine();
-            bool isNumber = int.TryParse(userInput, out parsedNumber);
+        public static int GenerateRandomNumber(int min, int max)
+        {
+            return s_random.Next(min, max);
+        }
+
+        public static int GetUserInputInt(string text)
+        {
+            bool isNumber = false;
+            int parsedNumber = 0;
+
+            while (isNumber == false)
+            {
+                Console.Write(text);
+                string userInput = Console.ReadLine();
+                isNumber = int.TryParse(userInput, out parsedNumber);
+
+                if (isNumber == false)
+                {
+                    Console.WriteLine("Ошибка! Введите число");
+                    Console.ReadKey(true);
+                }
+            }
 
             return parsedNumber;
         }
