@@ -17,9 +17,9 @@ namespace OOO7_TRAIN
 
     class Train
     {
-        private List<Carriage> _carriages = new List<Carriage>();
+        private List<Carriage> _carriages;
         
-        public Train(List<Carriage> carriages, string direction, int passengersAmount, int number)
+        public Train(List<Carriage> carriages, Direction direction, int passengersAmount, int number)
         {
             Direction = direction;
             PassengersAmount = passengersAmount;
@@ -27,7 +27,7 @@ namespace OOO7_TRAIN
             _carriages = carriages;
         }
 
-        public string Direction { get; private set; }
+        public Direction Direction { get; private set; }
         public int PassengersAmount {  get; private set; }
         public int Number { get; private set; }
         public bool IsSent { get; private set; } = false;
@@ -43,7 +43,7 @@ namespace OOO7_TRAIN
                 Console.ForegroundColor= ConsoleColor.Yellow;
             }
 
-            Console.WriteLine($"{Number} {Direction}. {_carriages.Count} вагонов / {PassengersAmount} пассажиров");
+            Console.WriteLine($"{Number} {Direction.DepartureCity} - {Direction.ArrivingCity}. {_carriages.Count} вагонов / {PassengersAmount} пассажиров");
 
             Console.ResetColor();
         }
@@ -56,55 +56,26 @@ namespace OOO7_TRAIN
 
     class Direction
     {
-        private List<string> _cities = new List<string>() { "Санкт-Петербург", "Москва", "Сочи", "Казань", "Мурманск", "Великий Новгрод" };
-
-        public string ChooseCities()
+        public Direction(string departureCity, string arrivingCity)
         {
-            string departureCity = GetCity("Введите город отправления:");
-
-            _cities.Remove(departureCity);
-
-            Console.Clear();
-
-            string arrivingCity = GetCity("Введите город прибытия:");
-            
-            Console.Clear();
-
-            return  departureCity + " - " +  arrivingCity;
+            DepartureCity = departureCity;
+            ArrivingCity = arrivingCity;
         }
 
-        private string GetCity(string text)
-        {
-            ShowCities();
-
-            int userInput = -1;
-
-            while (isCityExist(userInput) == false)
-            {
-                userInput = UserUtils.GetUserInputInt(text);
-            }
-
-            return _cities[userInput];
-        }
-
-        private bool isCityExist(int userInput)
-        {
-            return userInput >= 0 && userInput <= _cities.Count - 1;
-        }
-
-        private void ShowCities()
-        {
-            for (int i = 0; i < _cities.Count; i++)
-            {
-                Console.WriteLine($"{i} {_cities[i]}");
-            }
-        }
+        public string DepartureCity { get; private set; }
+        public string ArrivingCity { get; private set; }
     }
 
     class RailwayStation
     {
         private int _trainNumber = 0;
         private List<Train> _trains = new List<Train>();
+        private List<string> _cities;
+
+        public RailwayStation()
+        {
+            _cities = new List<string>() { "Санкт-Петербург", "Москва", "Сочи", "Казань", "Мурманск", "Великий Новгрод" };
+        }
 
         public void Work()
         {
@@ -121,35 +92,76 @@ namespace OOO7_TRAIN
 
                 ConsoleKeyInfo key = Console.ReadKey();
 
-                if(key.Key == CommandExit)
+                if(key.Key != CommandExit) 
+                {
+                    Console.Clear();
+                    Console.SetCursorPosition(0, 0);
+                    Console.WriteLine("Сформировать поезд:");
+                    Console.ReadKey();
+
+                    Train train = FormTrain();
+
+                    _trains.Add(train);
+
+                    Console.Clear();
+
+                    ShowTrains();
+
+                    Console.SetCursorPosition(0, 0);
+                    Console.WriteLine("Отправить поезд:");
+                    Console.ReadKey();
+
+                    train.SendTrain();
+                }
+                else
                 {
                     isWork = false;
-                    break;
-                }
-
-                Console.Clear();
-                Console.SetCursorPosition(0, 0);
-                Console.WriteLine("Сформировать поезд:");
-                Console.ReadKey();
-
-                Train train = FormTrain();
-
-                _trains.Add(train);
-
-                Console.Clear();
-
-                ShowTrains();
-
-                Console.SetCursorPosition(0, 0);
-                Console.WriteLine("Отправить поезд:");
-                Console.ReadKey();
-
-                train.SendTrain();
+                }              
             }
 
             Console.Clear();
-            Console.WriteLine("\tРабота завершена");
+            Console.WriteLine("\n\t Pабота завершена");
             Console.ReadKey();
+        }
+
+        private void ChooseCities(out string departureCity, out string arrivingCity)
+        {
+            departureCity = GetCity("Введите город отправления:");
+
+            _cities.Remove(departureCity);
+
+            Console.Clear();
+
+            arrivingCity = GetCity("Введите город прибытия:");
+
+            Console.Clear();
+        }
+
+        private void ShowCities()
+        {
+            for (int i = 0; i < _cities.Count; i++)
+            {
+                Console.WriteLine($"{i} {_cities[i]}");
+            }
+        }
+
+        private bool isCityExist(int userInput)
+        {
+            return userInput >= 0 && userInput <= _cities.Count - 1;
+        }
+
+        private string GetCity(string text)
+        {
+            ShowCities();
+
+            int userInput = -1;
+
+            while (isCityExist(userInput) == false)
+            {
+                userInput = UserUtils.GetUserInputInt(text);
+            }
+
+            return _cities[userInput];
         }
 
         private void ShowTrains()
@@ -173,15 +185,15 @@ namespace OOO7_TRAIN
             string arrivingCity;
             int passengersAmount;
 
-            Direction direction = new Direction();
+            ChooseCities(out departureCity, out arrivingCity);
 
-            string directions = direction.ChooseCities();
+            Direction direction = new Direction(departureCity, arrivingCity);
 
             passengersAmount = GetPassengers();
 
             List<Carriage> carriages = GetCarriages(passengersAmount);
 
-            Train train = new Train(carriages, directions, passengersAmount, _trainNumber);
+            Train train = new Train(carriages, direction, passengersAmount, _trainNumber);
 
             _trainNumber++;
 
