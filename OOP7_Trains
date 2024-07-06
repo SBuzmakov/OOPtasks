@@ -71,6 +71,7 @@ namespace OOO7_TRAIN
         private int _trainNumber = 0;
         private List<Train> _trains = new List<Train>();
         private List<string> _cities;
+        private int _ticketsMaxAmount = 1080;
 
         public RailwayStation()
         {
@@ -80,6 +81,7 @@ namespace OOO7_TRAIN
         public void Work()
         {
             const ConsoleKey CommandExit = ConsoleKey.Escape;
+
             bool isWork = true;
 
             while (isWork)
@@ -128,13 +130,16 @@ namespace OOO7_TRAIN
         {
             departureCity = GetCity("Введите город отправления:");
 
-            _cities.Remove(departureCity);
+            arrivingCity = departureCity;
 
             Console.Clear();
 
-            arrivingCity = GetCity("Введите город прибытия:");
+            while (arrivingCity == departureCity)
+            {
+                arrivingCity = GetCity("Введите город прибытия:");
 
-            Console.Clear();
+                Console.Clear();
+            }
         }
 
         private void ShowCities()
@@ -145,9 +150,9 @@ namespace OOO7_TRAIN
             }
         }
 
-        private bool isCityExist(int userInput)
+        private bool IsCityExist(int userInput)
         {
-            return userInput >= 0 && userInput <= _cities.Count - 1;
+            return userInput >= 0 && userInput < _cities.Count;
         }
 
         private string GetCity(string text)
@@ -156,7 +161,7 @@ namespace OOO7_TRAIN
 
             int userInput = -1;
 
-            while (isCityExist(userInput) == false)
+            while (IsCityExist(userInput) == false)
             {
                 userInput = UserUtils.GetUserInputInt(text);
             }
@@ -202,7 +207,7 @@ namespace OOO7_TRAIN
 
         private int GetPassengers()
         {
-            return UserUtils.GenerateRandomNumber(0, int.MaxValue);
+            return UserUtils.GenerateRandomNumber(0, _ticketsMaxAmount);
         }
 
         private List<Carriage> GetCarriages(int passengers)
