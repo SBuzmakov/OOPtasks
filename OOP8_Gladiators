@@ -29,6 +29,8 @@ namespace OOP8_Gladiators
 
             ChooseGladiators(out gladiator1, out gladiator2);
 
+            Console.Clear();
+
             Fight(gladiator1, gladiator2);
             
             Console.ReadKey();
@@ -36,32 +38,59 @@ namespace OOP8_Gladiators
 
         private void Fight(Gladiator gladiator1, Gladiator gladiator2)
         {
-            bool areAlive = gladiator1.Health > 0 || gladiator2.Health > 0;
             int fightStep = 1;
 
-            while (areAlive)
+            while (gladiator1.Health > 0 && gladiator2.Health > 0)
             {
-                Console.WriteLine("атака гладиатора 1:");
-                Console.ReadKey();
+                gladiator1.ShowStats();
+
+                gladiator2.ShowStats();
 
                 int damage;
 
-                gladiator1.Attack(out damage, fightStep);
+                DoTurn(gladiator1, gladiator2, out damage, fightStep);
 
-                gladiator2.TakeDamage(damage);
+                DoTurn(gladiator2, gladiator1, out damage, fightStep);
 
-                gladiator2.Attack(out damage, fightStep);
+                Console.Clear();
 
-                gladiator1.TakeDamage(damage);
+                fightStep++;
+            }
+
+            Console.Clear();
+
+            gladiator1.ShowStats();
+
+            gladiator2.ShowStats();
+
+            if(gladiator1.Health > 0)
+            {
+                Console.WriteLine($"Победитель гладиатор 1 {gladiator1.Name}");
+            }
+            else
+            {
+                Console.WriteLine($"Победитель гладиатор 2 {gladiator2.Name}");
             }
         }
 
-        private void ShowRoster()
+        public void ShowRoster()
         {
-            for (int i = 0; i < -_roster.Count; i++)
+            for (int i = 0; i < _roster.Count; i++)
             {
                 Console.WriteLine($"{i} {_roster[i].Name} : {_roster[i].Description}");
             }
+        }
+
+        private void DoTurn(Gladiator attackingGladiator, Gladiator attackedGladiator, out int damage, int fightStep)
+        {
+            Console.WriteLine($"атака гладиатора {attackingGladiator.Name}:") ;
+            Console.ReadKey();
+
+            attackingGladiator.Attack(out damage, fightStep);
+
+            attackedGladiator.TakeDamage(damage);
+
+            Console.ReadKey();
         }
 
         private Gladiator GetGladiator()
@@ -84,7 +113,30 @@ namespace OOP8_Gladiators
 
             gladiator1 = GetGladiator();
 
-            gladiator2 = GetGladiator();
+            Console.WriteLine($"первый гладиатор: {gladiator1.Name}");
+            Console.ReadKey();
+
+            gladiator2 = gladiator1;
+
+            Console.Clear();
+
+            while (gladiator2 == gladiator1)
+            {
+                Console.WriteLine("выберите гладиатора 2:");
+
+                gladiator2 = GetGladiator();
+
+                if (gladiator2 == gladiator1)
+                {
+                    Console.WriteLine("Этот гладиатор уже на арене! Пожалуйста выберите другого.");
+                    Console.ReadKey();
+                }
+
+                Console.Clear();
+            }
+
+            Console.WriteLine($"второй гладиатор: {gladiator2.Name}");
+            Console.ReadKey();
         }
 
         private bool IsGladiatorExist(int userInput)
@@ -106,18 +158,32 @@ namespace OOP8_Gladiators
         public int Health { get; protected set; } = 1000;
         public int MaxHealth { get; protected set; } = 1000;
         public int Mana { get; protected set; } = 0;
-        public int MaxMana { get; protected set; } = 4;
+        public int MaxMana { get; protected set; } = 10;
         public int BasicDamage { get; protected set; } = 50;
 
         public virtual void Attack(out int damage, int step)
         {
-            float randomBonusDamage = BasicDamage * UserUtils.GenerateRandomFloat();
-            damage = BasicDamage + Convert.ToInt32(randomBonusDamage);
+            if (Health <= 0)
+            {
+                Console.WriteLine($"{Name} повержен, не может атаковать!");
+                damage = 0;
+            }
+            else
+            {
+                float randomBonusDamage = BasicDamage * UserUtils.GenerateRandomFloat();
+                damage = BasicDamage + Convert.ToInt32(randomBonusDamage);
+            }
         }
 
         public virtual void TakeDamage(int damage)
         {
             Health -= damage;
+            Console.WriteLine($"Нанесено {damage} урона!");
+        }
+
+        public void ShowStats()
+        {
+            Console.WriteLine($"{Name}  hp: {Health}/{MaxHealth}\n\tmp: {Mana}/{MaxMana}");
         }
     }
 
@@ -134,11 +200,6 @@ namespace OOP8_Gladiators
                 Console.WriteLine("Удвоенный урон!");
                 damage += damage;
             }
-        }
-
-        public void ShowStats()
-        {
-            Console.WriteLine($"{Name}  hp: {Health}\n\tmp: {Mana}");
         }
 
         private bool CanDoubleAttack()
@@ -214,6 +275,7 @@ namespace OOP8_Gladiators
             {
                 Console.WriteLine("Восполнение здоровья!");
                 Health = MaxHealth;
+                Mana = 0;
             }
         }
     }
@@ -278,7 +340,7 @@ namespace OOP8_Gladiators
         {
             if (CanDodgeAttack())
             {
-                Console.WriteLine("Удалось увернуться от атаки!");
+                Console.WriteLine($"{Name} смог увернуться от атаки!");
                 damage = 0;
             }
 
