@@ -1,0 +1,318 @@
+using System.Runtime.CompilerServices;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace OOP8_Gladiators
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Arena arena = new Arena();
+
+            arena.BeginDuel();
+        }
+    }
+
+    class Arena
+    {
+        private List<Gladiator> _roster;
+
+        public Arena()
+        {
+            _roster = new List<Gladiator> { new RandomDoubleDamager("Вася"), new StableDoubleDamager("Петя"), new Monk("Сережа"), new Sorcerer("Коля"), new Dodger("Венцеслав") };
+        }
+
+        public void BeginDuel()
+        {
+            Gladiator gladiator1;
+            Gladiator gladiator2;
+
+            ChooseGladiators(out gladiator1, out gladiator2);
+
+            Fight(gladiator1, gladiator2);
+            
+            Console.ReadKey();
+        }
+
+        private void Fight(Gladiator gladiator1, Gladiator gladiator2)
+        {
+            bool areAlive = gladiator1.Health > 0 || gladiator2.Health > 0;
+            int fightStep = 1;
+
+            while (areAlive)
+            {
+                Console.WriteLine("атака гладиатора 1:");
+                Console.ReadKey();
+
+                int damage;
+
+                gladiator1.Attack(out damage, fightStep);
+
+                gladiator2.TakeDamage(damage);
+
+                gladiator2.Attack(out damage, fightStep);
+
+                gladiator1.TakeDamage(damage);
+            }
+        }
+
+        private void ShowRoster()
+        {
+            for (int i = 0; i < -_roster.Count; i++)
+            {
+                Console.WriteLine($"{i} {_roster[i].Name} : {_roster[i].Description}");
+            }
+        }
+
+        private Gladiator GetGladiator()
+        {
+            ShowRoster();
+
+            int userInput = -1;
+
+            while (IsGladiatorExist(userInput) == false)
+            {
+                userInput = UserUtils.GetUserInputInt();
+            }
+
+            return _roster[userInput];
+        }
+        
+        private void ChooseGladiators(out Gladiator gladiator1, out Gladiator gladiator2)
+        {
+            Console.WriteLine("выберите гладиатора 1:");
+
+            gladiator1 = GetGladiator();
+
+            gladiator2 = GetGladiator();
+        }
+
+        private bool IsGladiatorExist(int userInput)
+        {
+            return userInput >= 0 && userInput < _roster.Count;
+        }
+    }
+
+    class Gladiator
+    {
+        public Gladiator(string name, string description)
+        {
+            Name = name;
+            Description = description;
+        }
+
+        public string Description { get; private set; }
+        public string Name { get; protected set; }
+        public int Health { get; protected set; } = 1000;
+        public int MaxHealth { get; protected set; } = 1000;
+        public int Mana { get; protected set; } = 0;
+        public int MaxMana { get; protected set; } = 4;
+        public int BasicDamage { get; protected set; } = 50;
+
+        public virtual void Attack(out int damage, int step)
+        {
+            float randomBonusDamage = BasicDamage * UserUtils.GenerateRandomFloat();
+            damage = BasicDamage + Convert.ToInt32(randomBonusDamage);
+        }
+
+        public virtual void TakeDamage(int damage)
+        {
+            Health -= damage;
+        }
+    }
+
+    class RandomDoubleDamager : Gladiator
+    {
+        public RandomDoubleDamager(string name) : base(name, "имеет некий шанс нанести удвоенный урон") { }
+
+        public override void Attack(out int damage, int step)
+        {
+            base.Attack(out damage, step);
+
+            if (CanDoubleAttack())
+            {
+                Console.WriteLine("Удвоенный урон!");
+                damage += damage;
+            }
+        }
+
+        public void ShowStats()
+        {
+            Console.WriteLine($"{Name}  hp: {Health}\n\tmp: {Mana}");
+        }
+
+        private bool CanDoubleAttack()
+        {
+            float percentChanceRatio = 0.15f;
+            float randomNumber = UserUtils.GenerateRandomFloat();
+
+            if(randomNumber < percentChanceRatio)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    class StableDoubleDamager : Gladiator
+    {
+        public StableDoubleDamager(string name) : base(name, "каждую третью свою атаку удвоенный урон ") { }
+
+        public override void Attack(out int damage, int step)
+        {
+            base.Attack(out damage, step);
+
+            if (CanDoubleAttack(step))
+            {
+                Console.WriteLine("Удвоенный урон!");
+                damage += damage;
+            }
+        }
+
+        private bool CanDoubleAttack(int fightStep)
+        {
+            int doubleDamageStep = 3;
+
+            if (fightStep % doubleDamageStep == 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    class Monk : Gladiator
+    {
+        public Monk(string name) : base(name, "после накопления максимума маны использует лечение.") { }
+
+        public override void Attack(out int damage, int step)
+        {
+            base.Attack(out damage, step);
+
+            ReplenishMana();
+
+            Heal();
+        }
+
+        private void ReplenishMana()
+        {
+            if(Mana < MaxMana)
+            {
+                Mana++;
+            }
+        }
+
+        private void Heal()
+        {
+            if (Mana == MaxMana)
+            {
+                Console.WriteLine("Восполнение здоровья!");
+                Health = MaxHealth;
+            }
+        }
+    }
+
+    class Sorcerer : Gladiator
+    {
+        public Sorcerer(string name) : base(name, "пока маны достаточно применяет заклинание “Огненный шар”")
+        {
+            Mana = MaxMana;
+        }
+
+        public override void Attack(out int damage, int step)
+        {
+            base.Attack(out damage, step);
+
+            if (CanFireBallAttack())
+            {
+                Console.WriteLine("Атака огненным шаром!");
+                damage += damage;
+            }
+        }
+
+        private bool CanFireBallAttack()
+        {
+            if (Mana > 0)
+            {
+                Mana--;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    class Dodger : Gladiator
+    {
+        public Dodger(string name) : base(name, "имеет шанс уклониться, когда по нему наносят урон") { }
+
+        public override void Attack(out int damage, int step)
+        {
+            base.Attack(out damage, step);           
+        }
+
+        private bool CanDodgeAttack()
+        {
+            float percentChanceRatio = 0.15f;
+            float randomNumber = UserUtils.GenerateRandomFloat();
+
+            if (randomNumber < percentChanceRatio)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override void TakeDamage(int damage)
+        {
+            if (CanDodgeAttack())
+            {
+                Console.WriteLine("Удалось увернуться от атаки!");
+                damage = 0;
+            }
+
+            base.TakeDamage(damage);
+        }
+    }
+
+    class UserUtils
+    {
+        private static Random s_random = new Random();
+
+        public static float GenerateRandomFloat()
+        {
+            return s_random.NextSingle();
+        }
+
+        public static int GetUserInputInt()
+        {
+            bool isNumber = false;
+            int parsedNumber = 0;
+
+            while (isNumber == false)
+            {
+                string userInput = Console.ReadLine();
+                isNumber = int.TryParse(userInput, out parsedNumber);
+
+                if (isNumber == false)
+                {
+                    Console.WriteLine("Ошибка! Введите число");
+                    Console.ReadKey(true);
+                }
+            }
+
+            return parsedNumber;
+        }
+    }
+}
