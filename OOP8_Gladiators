@@ -23,11 +23,8 @@ namespace OOP8_Gladiators
         }
 
         public void BeginDuel()
-        {
-            Gladiator gladiator1;
-            Gladiator gladiator2;
-
-            ChooseGladiators(out gladiator1, out gladiator2);
+        {                       
+            ChooseGladiators(out Gladiator gladiator1, out Gladiator gladiator2);
 
             Console.Clear();
 
@@ -86,9 +83,7 @@ namespace OOP8_Gladiators
             Console.WriteLine($"атака гладиатора {attackingGladiator.Name}:") ;
             Console.ReadKey();
 
-            attackingGladiator.Attack(out damage, fightStep);
-
-            attackedGladiator.TakeDamage(damage);
+            attackingGladiator.MakeAttack(attackedGladiator, out damage, fightStep);
 
             Console.ReadKey();
         }
@@ -161,7 +156,7 @@ namespace OOP8_Gladiators
         public int MaxMana { get; protected set; } = 10;
         public int BasicDamage { get; protected set; } = 50;
 
-        public virtual void Attack(out int damage, int step)
+        public virtual void MakeAttack(Gladiator attackedGladiator,out int damage, int step)
         {
             if (Health <= 0)
             {
@@ -173,12 +168,21 @@ namespace OOP8_Gladiators
                 float randomBonusDamage = BasicDamage * UserUtils.GenerateRandomFloat();
                 damage = BasicDamage + Convert.ToInt32(randomBonusDamage);
             }
+
+            damage *= ApplySkill(step);
+
+            attackedGladiator.TakeDamage(damage);
         }
 
         public virtual void TakeDamage(int damage)
         {
             Health -= damage;
             Console.WriteLine($"Нанесено {damage} урона!");
+        }
+
+        public virtual int ApplySkill(int fightStep)
+        {
+            return 1;
         }
 
         public void ShowStats()
@@ -191,14 +195,18 @@ namespace OOP8_Gladiators
     {
         public RandomDoubleDamager(string name) : base(name, "имеет некий шанс нанести удвоенный урон") { }
 
-        public override void Attack(out int damage, int step)
+        public override int ApplySkill(int fightStep)
         {
-            base.Attack(out damage, step);
+            int skillDamageModificator = 2;
 
             if (CanDoubleAttack())
             {
                 Console.WriteLine("Удвоенный урон!");
-                damage += damage;
+                return skillDamageModificator;
+            }
+            else
+            {
+                return 1;
             }
         }
 
@@ -207,14 +215,7 @@ namespace OOP8_Gladiators
             float percentChanceRatio = 0.15f;
             float randomNumber = UserUtils.GenerateRandomFloat();
 
-            if(randomNumber < percentChanceRatio)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return randomNumber < percentChanceRatio;
         }
     }
 
@@ -222,14 +223,18 @@ namespace OOP8_Gladiators
     {
         public StableDoubleDamager(string name) : base(name, "каждую третью свою атаку удвоенный урон ") { }
 
-        public override void Attack(out int damage, int step)
+        public override int ApplySkill(int step)
         {
-            base.Attack(out damage, step);
+            int skillDamageModificator = 2;
 
             if (CanDoubleAttack(step))
             {
                 Console.WriteLine("Удвоенный урон!");
-                damage += damage;
+                return skillDamageModificator;
+            }
+            else
+            {
+                return 1;
             }
         }
 
@@ -237,14 +242,7 @@ namespace OOP8_Gladiators
         {
             int doubleDamageStep = 3;
 
-            if (fightStep % doubleDamageStep == 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return fightStep % doubleDamageStep == 0;           
         }
     }
 
@@ -252,13 +250,13 @@ namespace OOP8_Gladiators
     {
         public Monk(string name) : base(name, "после накопления максимума маны использует лечение.") { }
 
-        public override void Attack(out int damage, int step)
+        public override int ApplySkill(int step)
         {
-            base.Attack(out damage, step);
-
             ReplenishMana();
 
             Heal();
+
+            return 1;
         }
 
         private void ReplenishMana()
@@ -287,14 +285,18 @@ namespace OOP8_Gladiators
             Mana = MaxMana;
         }
 
-        public override void Attack(out int damage, int step)
+        public override int ApplySkill(int step)
         {
-            base.Attack(out damage, step);
+            int skillDamageModificator = 2;
 
             if (CanFireBallAttack())
             {
                 Console.WriteLine("Атака огненным шаром!");
-                damage += damage;
+                return skillDamageModificator;
+            }
+            else
+            {
+                return 1;
             }
         }
 
@@ -316,14 +318,20 @@ namespace OOP8_Gladiators
     {
         public Dodger(string name) : base(name, "имеет шанс уклониться, когда по нему наносят урон") { }
 
-        public override void Attack(out int damage, int step)
+        public override void TakeDamage(int damage)
         {
-            base.Attack(out damage, step);           
+            if (CanDodgeAttack())
+            {
+                Console.WriteLine($"{Name} смог увернуться от атаки!");
+                damage = 0;
+            }
+
+            base.TakeDamage(damage);
         }
 
         private bool CanDodgeAttack()
         {
-            float percentChanceRatio = 0.15f;
+            float percentChanceRatio = 0.30f;
             float randomNumber = UserUtils.GenerateRandomFloat();
 
             if (randomNumber < percentChanceRatio)
@@ -334,17 +342,6 @@ namespace OOP8_Gladiators
             {
                 return false;
             }
-        }
-
-        public override void TakeDamage(int damage)
-        {
-            if (CanDodgeAttack())
-            {
-                Console.WriteLine($"{Name} смог увернуться от атаки!");
-                damage = 0;
-            }
-
-            base.TakeDamage(damage);
         }
     }
 
