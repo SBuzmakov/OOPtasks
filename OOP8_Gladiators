@@ -156,7 +156,12 @@ namespace OOP8_Gladiators
         public int MaxMana { get; protected set; } = 10;
         public int BasicDamage { get; protected set; } = 50;
 
-        public virtual void MakeAttack(Gladiator attackedGladiator,out int damage, int step)
+        public void ShowStats()
+        {
+            Console.WriteLine($"{Name}  hp: {Health}/{MaxHealth}\n\tmp: {Mana}/{MaxMana}");
+        }
+
+        public void MakeAttack(Gladiator attackedGladiator,out int damage, int step)
         {
             if (Health <= 0)
             {
@@ -169,25 +174,20 @@ namespace OOP8_Gladiators
                 damage = BasicDamage + Convert.ToInt32(randomBonusDamage);
             }
 
-            damage *= ApplySkill(step);
+            damage *= ApplySkillModificator(step);
 
             attackedGladiator.TakeDamage(damage);
         }
 
-        public virtual void TakeDamage(int damage)
+        protected virtual void TakeDamage(int damage)
         {
             Health -= damage;
             Console.WriteLine($"Нанесено {damage} урона!");
         }
 
-        public virtual int ApplySkill(int fightStep)
+        protected virtual int ApplySkillModificator(int fightStep)
         {
             return 1;
-        }
-
-        public void ShowStats()
-        {
-            Console.WriteLine($"{Name}  hp: {Health}/{MaxHealth}\n\tmp: {Mana}/{MaxMana}");
         }
     }
 
@@ -195,7 +195,7 @@ namespace OOP8_Gladiators
     {
         public RandomDoubleDamager(string name) : base(name, "имеет некий шанс нанести удвоенный урон") { }
 
-        public override int ApplySkill(int fightStep)
+        protected override int ApplySkillModificator(int fightStep)
         {
             int skillDamageModificator = 2;
 
@@ -223,7 +223,7 @@ namespace OOP8_Gladiators
     {
         public StableDoubleDamager(string name) : base(name, "каждую третью свою атаку удвоенный урон ") { }
 
-        public override int ApplySkill(int step)
+        protected override int ApplySkillModificator(int step)
         {
             int skillDamageModificator = 2;
 
@@ -250,7 +250,7 @@ namespace OOP8_Gladiators
     {
         public Monk(string name) : base(name, "после накопления максимума маны использует лечение.") { }
 
-        public override int ApplySkill(int step)
+        protected override int ApplySkillModificator(int step)
         {
             ReplenishMana();
 
@@ -285,7 +285,7 @@ namespace OOP8_Gladiators
             Mana = MaxMana;
         }
 
-        public override int ApplySkill(int step)
+        protected override int ApplySkillModificator(int step)
         {
             int skillDamageModificator = 2;
 
@@ -318,7 +318,7 @@ namespace OOP8_Gladiators
     {
         public Dodger(string name) : base(name, "имеет шанс уклониться, когда по нему наносят урон") { }
 
-        public override void TakeDamage(int damage)
+        protected override void TakeDamage(int damage)
         {
             if (CanDodgeAttack())
             {
