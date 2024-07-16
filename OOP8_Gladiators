@@ -15,11 +15,11 @@ namespace OOP8_Gladiators
 
     class Arena
     {
-        private List<Gladiator> _roster;
+        private List<Gladiator> _gladiators;
 
         public Arena()
         {
-            _roster = new List<Gladiator> { new RandomDoubleDamager("Вася"), new StableDoubleDamager("Петя"), new Monk("Сережа"), new Sorcerer("Коля"), new Dodger("Венцеслав") };
+            _gladiators = new List<Gladiator> { new RandomDoubleDamager("Вася"), new StableDoubleDamager("Петя"), new Monk("Сережа"), new Sorcerer("Коля"), new Dodger("Венцеслав") };
         }
 
         public void BeginDuel()
@@ -32,6 +32,13 @@ namespace OOP8_Gladiators
             
             Console.ReadKey();
         }
+        public void ShowGladiatorsInfo()
+        {
+            for (int i = 0; i < _gladiators.Count; i++)
+            {
+                Console.WriteLine($"{i} {_gladiators[i].Name} : {_gladiators[i].Description}");
+            }
+        }
 
         private void Fight(Gladiator gladiator1, Gladiator gladiator2)
         {
@@ -40,8 +47,6 @@ namespace OOP8_Gladiators
                 gladiator1.ShowStats();
 
                 gladiator2.ShowStats();
-
-                int damage;
 
                 DoTurn(gladiator1, gladiator2);
 
@@ -55,21 +60,17 @@ namespace OOP8_Gladiators
             ShowWinner(gladiator1, gladiator2);
         }
 
-        public void ShowRoster()
-        {
-            for (int i = 0; i < _roster.Count; i++)
-            {
-                Console.WriteLine($"{i} {_roster[i].Name} : {_roster[i].Description}");
-            }
-        }
-
         private void ShowWinner(Gladiator gladiator1, Gladiator gladiator2)
         {
             gladiator1.ShowStats();
 
             gladiator2.ShowStats();
 
-            if (gladiator1.Health > 0)
+            if(gladiator1.Health <= 0 && gladiator2.Health <= 0)
+            {
+                Console.WriteLine("оба гладиатора пали");
+            }
+            else if (gladiator1.Health > 0)
             {
                 Console.WriteLine($"Победитель гладиатор 1 {gladiator1.Name}");
             }
@@ -84,14 +85,14 @@ namespace OOP8_Gladiators
             Console.WriteLine($"атака гладиатора {attackingGladiator.Name}:") ;
             Console.ReadKey();
 
-            attackingGladiator.MakeAttack(attackedGladiator);
+            attackingGladiator.Attack(attackedGladiator);
 
             Console.ReadKey();
         }
 
         private Gladiator GetGladiator()
         {
-            ShowRoster();
+            ShowGladiatorsInfo();
 
             int userInput = -1;
 
@@ -100,7 +101,7 @@ namespace OOP8_Gladiators
                 userInput = UserUtils.GetUserInputInt();
             }
 
-            return _roster[userInput];
+            return _gladiators[userInput];
         }
         
         private void ChooseGladiators(out Gladiator gladiator1, out Gladiator gladiator2)
@@ -137,7 +138,7 @@ namespace OOP8_Gladiators
 
         private bool IsGladiatorExist(int userInput)
         {
-            return userInput >= 0 && userInput < _roster.Count;
+            return userInput >= 0 && userInput < _gladiators.Count;
         }
     }
 
@@ -162,7 +163,7 @@ namespace OOP8_Gladiators
             Console.WriteLine($"{Name}  hp: {Health}/{MaxHealth}\n\tmp: {Mana}/{MaxMana}");
         }
 
-        public virtual void MakeAttack(Gladiator attackedGladiator)
+        public virtual void Attack(Gladiator attackedGladiator)
         {
             int damage;
 
@@ -224,29 +225,29 @@ namespace OOP8_Gladiators
 
     class StableDoubleDamager : Gladiator
     {
-        private int fightStep;
+        private int _fightStep;
 
         public StableDoubleDamager(string name) : base(name, "каждую третью свою атаку наносит два удара ") { }
 
-        public override void MakeAttack(Gladiator attackedGladiator)
+        public override void Attack(Gladiator attackedGladiator)
         {
-            base.MakeAttack(attackedGladiator);
+            base.Attack(attackedGladiator);
 
             if (CanDoubleAttack())
             {
                 Console.WriteLine("второй удар!");
 
-                base.MakeAttack(attackedGladiator);
+                base.Attack(attackedGladiator);
             }
         }
 
         private bool CanDoubleAttack()
         {
-            fightStep++;
+            _fightStep++;
 
             int doubleDamageStep = 3;
 
-            return fightStep % doubleDamageStep == 0;           
+            return _fightStep % doubleDamageStep == 0;           
         }
     }
 
