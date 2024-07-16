@@ -45,9 +45,9 @@ namespace OOP8_Gladiators
 
                 int damage;
 
-                DoTurn(gladiator1, gladiator2, out damage, fightStep);
+                DoTurn(gladiator1, gladiator2, fightStep);
 
-                DoTurn(gladiator2, gladiator1, out damage, fightStep);
+                DoTurn(gladiator2, gladiator1, fightStep);
 
                 Console.Clear();
 
@@ -56,18 +56,7 @@ namespace OOP8_Gladiators
 
             Console.Clear();
 
-            gladiator1.ShowStats();
-
-            gladiator2.ShowStats();
-
-            if(gladiator1.Health > 0)
-            {
-                Console.WriteLine($"Победитель гладиатор 1 {gladiator1.Name}");
-            }
-            else
-            {
-                Console.WriteLine($"Победитель гладиатор 2 {gladiator2.Name}");
-            }
+            ShowWinner(gladiator1, gladiator2);
         }
 
         public void ShowRoster()
@@ -78,12 +67,28 @@ namespace OOP8_Gladiators
             }
         }
 
-        private void DoTurn(Gladiator attackingGladiator, Gladiator attackedGladiator, out int damage, int fightStep)
+        private void ShowWinner(Gladiator gladiator1, Gladiator gladiator2)
+        {
+            gladiator1.ShowStats();
+
+            gladiator2.ShowStats();
+
+            if (gladiator1.Health > 0)
+            {
+                Console.WriteLine($"Победитель гладиатор 1 {gladiator1.Name}");
+            }
+            else
+            {
+                Console.WriteLine($"Победитель гладиатор 2 {gladiator2.Name}");
+            }
+        }
+
+        private void DoTurn(Gladiator attackingGladiator, Gladiator attackedGladiator, int fightStep)
         {
             Console.WriteLine($"атака гладиатора {attackingGladiator.Name}:") ;
             Console.ReadKey();
 
-            attackingGladiator.MakeAttack(attackedGladiator, out damage, fightStep);
+            attackingGladiator.MakeAttack(attackedGladiator);
 
             Console.ReadKey();
         }
@@ -161,8 +166,10 @@ namespace OOP8_Gladiators
             Console.WriteLine($"{Name}  hp: {Health}/{MaxHealth}\n\tmp: {Mana}/{MaxMana}");
         }
 
-        public void MakeAttack(Gladiator attackedGladiator,out int damage, int step)
+        public virtual void MakeAttack(Gladiator attackedGladiator)
         {
+            int damage;
+
             if (Health <= 0)
             {
                 Console.WriteLine($"{Name} повержен, не может атаковать!");
@@ -174,7 +181,7 @@ namespace OOP8_Gladiators
                 damage = BasicDamage + Convert.ToInt32(randomBonusDamage);
             }
 
-            damage *= ApplySkillModificator(step);
+            damage *= ApplySkillModificator();
 
             attackedGladiator.TakeDamage(damage);
         }
@@ -185,7 +192,7 @@ namespace OOP8_Gladiators
             Console.WriteLine($"Нанесено {damage} урона!");
         }
 
-        protected virtual int ApplySkillModificator(int fightStep)
+        protected virtual int ApplySkillModificator()
         {
             return 1;
         }
@@ -195,11 +202,11 @@ namespace OOP8_Gladiators
     {
         public RandomDoubleDamager(string name) : base(name, "имеет некий шанс нанести удвоенный урон") { }
 
-        protected override int ApplySkillModificator(int fightStep)
+        protected override int ApplySkillModificator()
         {
             int skillDamageModificator = 2;
 
-            if (CanDoubleAttack())
+            if (CanDoubleDamageAttack())
             {
                 Console.WriteLine("Удвоенный урон!");
                 return skillDamageModificator;
@@ -210,7 +217,7 @@ namespace OOP8_Gladiators
             }
         }
 
-        private bool CanDoubleAttack()
+        private bool CanDoubleDamageAttack()
         {
             float percentChanceRatio = 0.15f;
             float randomNumber = UserUtils.GenerateRandomFloat();
@@ -221,25 +228,26 @@ namespace OOP8_Gladiators
 
     class StableDoubleDamager : Gladiator
     {
-        public StableDoubleDamager(string name) : base(name, "каждую третью свою атаку удвоенный урон ") { }
+        private int fightStep;
 
-        protected override int ApplySkillModificator(int step)
+        public StableDoubleDamager(string name) : base(name, "каждую третью свою атаку наносит два удара ") { }
+
+        public override void MakeAttack(Gladiator attackedGladiator)
         {
-            int skillDamageModificator = 2;
+            base.MakeAttack(attackedGladiator);
 
-            if (CanDoubleAttack(step))
+            if (CanDoubleAttack())
             {
-                Console.WriteLine("Удвоенный урон!");
-                return skillDamageModificator;
-            }
-            else
-            {
-                return 1;
+                Console.WriteLine("второй удар!");
+
+                base.MakeAttack(attackedGladiator);
             }
         }
 
-        private bool CanDoubleAttack(int fightStep)
+        private bool CanDoubleAttack()
         {
+            fightStep++;
+
             int doubleDamageStep = 3;
 
             return fightStep % doubleDamageStep == 0;           
@@ -250,7 +258,7 @@ namespace OOP8_Gladiators
     {
         public Monk(string name) : base(name, "после накопления максимума маны использует лечение.") { }
 
-        protected override int ApplySkillModificator(int step)
+        protected override int ApplySkillModificator()
         {
             ReplenishMana();
 
@@ -285,7 +293,7 @@ namespace OOP8_Gladiators
             Mana = MaxMana;
         }
 
-        protected override int ApplySkillModificator(int step)
+        protected override int ApplySkillModificator()
         {
             int skillDamageModificator = 2;
 
@@ -334,14 +342,7 @@ namespace OOP8_Gladiators
             float percentChanceRatio = 0.30f;
             float randomNumber = UserUtils.GenerateRandomFloat();
 
-            if (randomNumber < percentChanceRatio)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return randomNumber < percentChanceRatio;
         }
     }
 
