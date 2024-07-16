@@ -35,8 +35,6 @@ namespace OOP8_Gladiators
 
         private void Fight(Gladiator gladiator1, Gladiator gladiator2)
         {
-            int fightStep = 1;
-
             while (gladiator1.Health > 0 && gladiator2.Health > 0)
             {
                 gladiator1.ShowStats();
@@ -45,13 +43,11 @@ namespace OOP8_Gladiators
 
                 int damage;
 
-                DoTurn(gladiator1, gladiator2, fightStep);
+                DoTurn(gladiator1, gladiator2);
 
-                DoTurn(gladiator2, gladiator1, fightStep);
+                DoTurn(gladiator2, gladiator1);
 
                 Console.Clear();
-
-                fightStep++;
             }
 
             Console.Clear();
@@ -83,7 +79,7 @@ namespace OOP8_Gladiators
             }
         }
 
-        private void DoTurn(Gladiator attackingGladiator, Gladiator attackedGladiator, int fightStep)
+        private void DoTurn(Gladiator attackingGladiator, Gladiator attackedGladiator)
         {
             Console.WriteLine($"атака гладиатора {attackingGladiator.Name}:") ;
             Console.ReadKey();
