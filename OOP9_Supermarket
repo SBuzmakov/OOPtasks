@@ -20,7 +20,6 @@ namespace OOP9_Supermarket
         public Supermarket()
         {
             _assortment = new List<Product>() {new Product("сыр", 250), new Product("хлеб", 50), new Product("колбаса", 300),new Product("чай", 350), new Product("масло", 400) };
-            _buyersQueue = FormQueue();
         }
 
         public void Work()
@@ -97,7 +96,7 @@ namespace OOP9_Supermarket
                 }
                 else
                 {
-                    buyer.RemoveRandomProduct(products);
+                    RemoveRandomProduct(products);
                 }
             }
         }
@@ -119,6 +118,12 @@ namespace OOP9_Supermarket
             {
                 buyer.TakeProduct(product);
             }
+        }
+
+        private void RemoveRandomProduct(List<Product> products)
+        {
+            int index = UserUtils.GenerateRandomNumber(0, products.Count);
+            products.Remove(products[index]);
         }
 
         private void AcceptPayment(int cash)
@@ -143,17 +148,13 @@ namespace OOP9_Supermarket
             return totalPrice;
         }
 
-        private Queue<Buyer> FormQueue()
+        private void FormQueue()
         {
-            Queue<Buyer> queue = new Queue<Buyer>();
-
             for (int i = 0; i < _maxQueueSize - _buyersQueue.Count; i++)
             {
                 Buyer buyer = new Buyer(_assortment);
-                queue.Enqueue(buyer);
+                _buyersQueue.Enqueue(buyer);
             }
-
-            return queue;
         }
     }
 
@@ -164,7 +165,7 @@ namespace OOP9_Supermarket
 
         public Buyer(List<Product> assortment)
         {
-            Cash = UserUtils.GenerateRandomNumber(0, 2000);
+            Cash = UserUtils.GenerateRandomNumber(2000, 20000);
 
             _marketBasket = FillBag(assortment);
         }
@@ -179,12 +180,6 @@ namespace OOP9_Supermarket
         public List<Product> PresentBasket()
         {
             return _marketBasket.GetProductsList();
-        }
-
-        public void RemoveRandomProduct(List<Product> products)
-        {
-            int index = UserUtils.GenerateRandomNumber(0, products.Count);
-            products.Remove(products[index]);
         }
 
         public void TakeProduct(Product product)
