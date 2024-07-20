@@ -60,9 +60,16 @@ namespace OOP9_Supermarket
             }
         }
 
+        private List<Product> GetAssortmentCopy()
+        {
+            List<Product> assortmentCopy = new List<Product>();
+
+            return _assortment.ToList();
+        }
+
         private void ServeBuyer()
         {
-            if (HaveQueueBuyer(_buyersQueue))
+            if (HaveQueueBuyer())
             {
                 Buyer buyer = _buyersQueue.Dequeue();
 
@@ -119,6 +126,7 @@ namespace OOP9_Supermarket
         private void ShowDealResult(int totalPrice, List<Product> products)
         {
             Console.WriteLine($"Были проданы за {totalPrice}");
+
             foreach (Product product in products)
             {
                 Console.Write($"{product.Name} ");
@@ -149,7 +157,7 @@ namespace OOP9_Supermarket
 
         private bool IsMoneyEnough(int buyersCash, int totalPrice)
         {
-            return buyersCash > totalPrice;
+            return buyersCash >= totalPrice;
         }
 
         private int GetBasketTotalPrice(List<Product> products)
@@ -170,13 +178,13 @@ namespace OOP9_Supermarket
 
             for (int i = 0; i < _maxQueueSize - queueCount; i++)
             {
-                Buyer buyer = new Buyer(_assortment);
+                Buyer buyer = new Buyer(GetAssortmentCopy());
 
                 _buyersQueue.Enqueue(buyer);
             }
         }
 
-        private bool HaveQueueBuyer(Queue<Buyer> queue)
+        private bool HaveQueueBuyer()
         {
             return _buyersQueue.Count > 0;
         }
