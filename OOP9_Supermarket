@@ -14,7 +14,7 @@ namespace OOP9_Supermarket
     {
         private int _revenue;
         private int _maxQueueSize = 5;
-        private Queue<Buyer> _buyersQueue = new Queue<Buyer>(0);
+        private Queue<Buyer> _buyersQueue = new Queue<Buyer>();
         private List<Product> _assortment = new List<Product>();
 
         public Supermarket()
@@ -36,7 +36,7 @@ namespace OOP9_Supermarket
 
                 Console.WriteLine($"Прибыль магазина: {_revenue}\n");
                 Console.WriteLine($"в данный момент в очереди {_buyersQueue.Count} человек\n");
-                Console.WriteLine($"нажмите ecsape - {ExitCommand} для выхода\n Q - {FormQueueCommand} впустить очередь\n enter - {ServeBuyerCommand} обслужить покупателя");
+                Console.WriteLine($"нажмите {ExitCommand} - для выхода\n {FormQueueCommand} - впустить очередь\n {ServeBuyerCommand} - обслужить покупателя");
 
                 ConsoleKeyInfo charKey = Console.ReadKey();
 
@@ -62,41 +62,56 @@ namespace OOP9_Supermarket
 
         private void ServeBuyer()
         {
-            Buyer buyer = _buyersQueue.Dequeue();
+            if (HaveQueueBuyer(_buyersQueue))
+            {
+                Buyer buyer = _buyersQueue.Dequeue();
 
-            List<Product> productList = buyer.PresentBasket();
+                List<Product> productList = buyer.PresentBasket();
 
-            int totalPrice = GetBasketTotalPrice(productList);
+                MakeDeal(buyer, out int totalPrice, productList);
 
-            MakeDeal(buyer, totalPrice, productList);
+                ShowDealResult(totalPrice, productList);
+            }
+            else
+            {
+                Console.WriteLine("Отсутствует очередь покупателей");
 
-            ShowDealResult(totalPrice, productList);
+                Console.ReadLine();
+            }
         }
 
-        private void MakeDeal(Buyer buyer, int totalPrice, List<Product> products)
+        private void MakeDeal(Buyer buyer, out int totalPrice, List<Product> productsList)
         {
+            totalPrice = GetBasketTotalPrice(productsList);
+
             bool isDealMade = false;
 
             while (isDealMade == false)
             {
-                if (buyer.Cash == 0)
-                {
-                    Console.WriteLine("Денег ни на что не хватает.");
-                    isDealMade = true;
-                }
-                else if (IsMoneyEnough(buyer.Cash, totalPrice))
+                if (IsMoneyEnough(buyer.Cash,  totalPrice) && productsList.Count > 0)
                 {
                     buyer.Pay(totalPrice);
 
                     AcceptPayment(totalPrice);
 
-                    FillBuyersBag(buyer, products);
+                    FillBuyersBag(buyer, productsList);
 
                     isDealMade = true;
                 }
                 else
                 {
-                    RemoveRandomProduct(products);
+                    if (productsList.Count > 0)
+                    {
+                        RemoveRandomProduct(productsList);
+
+                        totalPrice = GetBasketTotalPrice(productsList);
+                    }
+                    else
+                    {
+                        Console.WriteLine("денег ни на что не хватает");
+                        Console.ReadLine();
+                        isDealMade = true;
+                    }
                 }
             }
         }
@@ -123,6 +138,7 @@ namespace OOP9_Supermarket
         private void RemoveRandomProduct(List<Product> products)
         {
             int index = UserUtils.GenerateRandomNumber(0, products.Count);
+
             products.Remove(products[index]);
         }
 
@@ -150,11 +166,19 @@ namespace OOP9_Supermarket
 
         private void FormQueue()
         {
-            for (int i = 0; i < _maxQueueSize - _buyersQueue.Count; i++)
+            int queueCount = _buyersQueue.Count;
+
+            for (int i = 0; i < _maxQueueSize - queueCount; i++)
             {
                 Buyer buyer = new Buyer(_assortment);
+
                 _buyersQueue.Enqueue(buyer);
             }
+        }
+
+        private bool HaveQueueBuyer(Queue<Buyer> queue)
+        {
+            return _buyersQueue.Count > 0;
         }
     }
 
@@ -165,7 +189,7 @@ namespace OOP9_Supermarket
 
         public Buyer(List<Product> assortment)
         {
-            Cash = UserUtils.GenerateRandomNumber(2000, 20000);
+            Cash = UserUtils.GenerateRandomNumber(0, 2000);
 
             _marketBasket = FillBag(assortment);
         }
@@ -218,6 +242,7 @@ namespace OOP9_Supermarket
             for (int i = 0; i < _products.Count; i++)
             {
                 Product product = _products[i];
+
                 products.Add(product);
             }
 
