@@ -62,8 +62,6 @@ namespace OOP9_Supermarket
 
         private List<Product> GetAssortmentCopy()
         {
-            List<Product> assortmentCopy = new List<Product>();
-
             return _assortment.ToList();
         }
 
