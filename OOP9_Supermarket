@@ -62,6 +62,8 @@ namespace OOP9_Supermarket
 
         private List<Product> GetAssortmentCopy()
         {
+            List<Product> assortmentCopy = new List<Product>();
+
             return _assortment.ToList();
         }
 
@@ -73,9 +75,7 @@ namespace OOP9_Supermarket
 
                 List<Product> productList = buyer.PresentBasket();
 
-                MakeDeal(buyer, out int totalPrice, productList);
-
-                ShowDealResult(totalPrice, productList);
+                MakeDeal(buyer);
             }
             else
             {
@@ -85,9 +85,11 @@ namespace OOP9_Supermarket
             }
         }
 
-        private void MakeDeal(Buyer buyer, out int totalPrice, List<Product> productsList)
+        private void MakeDeal(Buyer buyer)
         {
-            totalPrice = GetBasketTotalPrice(productsList);
+            List<Product> productsList = buyer.PresentBasket();
+
+            int totalPrice = GetBasketTotalPrice(productsList);
 
             bool isDealMade = false;
 
@@ -95,11 +97,9 @@ namespace OOP9_Supermarket
             {
                 if (IsMoneyEnough(buyer.Cash,  totalPrice) && productsList.Count > 0)
                 {
-                    buyer.Pay(totalPrice);
+                    buyer.Buy(totalPrice, productsList);
 
                     AcceptPayment(totalPrice);
-
-                    FillBuyersBag(buyer, productsList);
 
                     isDealMade = true;
                 }
@@ -107,7 +107,7 @@ namespace OOP9_Supermarket
                 {
                     if (productsList.Count > 0)
                     {
-                        RemoveRandomProduct(productsList);
+                        buyer.RemoveRandomProduct(productsList);
 
                         totalPrice = GetBasketTotalPrice(productsList);
                     }
@@ -119,6 +119,8 @@ namespace OOP9_Supermarket
                     }
                 }
             }
+
+            ShowDealResult(totalPrice, productsList);
         }
 
         private void ShowDealResult(int totalPrice, List<Product> products)
@@ -131,21 +133,6 @@ namespace OOP9_Supermarket
             }
 
             Console.ReadLine();
-        }
-
-        private void FillBuyersBag(Buyer buyer, List<Product> productList)
-        {
-            foreach (Product product in productList)
-            {
-                buyer.TakeProduct(product);
-            }
-        }
-
-        private void RemoveRandomProduct(List<Product> products)
-        {
-            int index = UserUtils.GenerateRandomNumber(0, products.Count);
-
-            products.Remove(products[index]);
         }
 
         private void AcceptPayment(int cash)
@@ -190,34 +177,56 @@ namespace OOP9_Supermarket
 
     class Buyer
     {
-        private List<Product> _ownBag = new List<Product>();
-        private Bag _marketBasket = new Bag();
+        private Bag _bag = new Bag();
+        private Bag _basket = new Bag();
 
         public Buyer(List<Product> assortment)
         {
             Cash = UserUtils.GenerateRandomNumber(0, 2000);
 
-            _marketBasket = FillBag(assortment);
+            _basket = FillBasket(assortment);
         }
 
         public int Cash {  get; private set; }
 
-        public void Pay(int price)
-        {
-            Cash -= price;
-        }
-
         public List<Product> PresentBasket()
         {
-            return _marketBasket.GetProductsList();
+            return _basket.GetProductsList();
+        }
+
+        public void RemoveRandomProduct(List<Product> productsList)
+        {
+            int index = UserUtils.GenerateRandomNumber(0, productsList.Count);
+
+            productsList.RemoveAt(index);
         }
 
         public void TakeProduct(Product product)
         {
-            _ownBag.Add(product);
+            _bag.PutProduct(product);
         }
 
-        private Bag FillBag(List<Product> products)
+        public void Buy(int price, List<Product> productsList)
+        {
+            Pay(price);
+
+            FillBag(productsList);
+        }
+
+        private void Pay(int price)
+        {
+            Cash -= price;
+        }
+
+        private void FillBag(List<Product> productList)
+        {
+            foreach (Product product in productList)
+            {
+                TakeProduct(product);
+            }
+        }
+
+        private Bag FillBasket(List<Product> products)
         {
             Bag bag = new Bag();
 
@@ -243,21 +252,7 @@ namespace OOP9_Supermarket
 
         public List<Product> GetProductsList()
         {
-            List<Product> products = new List<Product>();
-
-            for (int i = 0; i < _products.Count; i++)
-            {
-                Product product = _products[i];
-
-                products.Add(product);
-            }
-
-            return products;
-        }
-
-        public void RemoveProduct(Product product)
-        {
-            _products.Remove(product);
+            return _products.ToList();
         }
     }
 
