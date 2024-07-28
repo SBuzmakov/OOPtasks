@@ -18,6 +18,7 @@ namespace OOP9_Supermarket
         private int _maxQueueSize = 5;
         private Queue<Buyer> _buyersQueue = new Queue<Buyer>();
         private List<Product> _assortment = new List<Product>();
+        private bool _haveQueueBuyer => _buyersQueue.Count > 0;
 
         public Supermarket()
         {
@@ -53,10 +54,7 @@ namespace OOP9_Supermarket
                         break;
 
                     case ServeBuyerCommand:
-                        ServeBuyer();
-                        break;
-
-                    default:
+                        Serve();
                         break;
                 }
             }
@@ -67,9 +65,9 @@ namespace OOP9_Supermarket
             return _assortment.ToList();
         }
 
-        private void ServeBuyer()
+        private void Serve()
         {
-            if (HaveQueueBuyer())
+            if (_haveQueueBuyer)
             {
                 Buyer buyer = _buyersQueue.Dequeue();
 
@@ -85,7 +83,9 @@ namespace OOP9_Supermarket
 
         private void MakeDeal(Buyer buyer)
         {
-            buyer.Buy(out int totalPrice);
+            int totalPrice = buyer.GetTotalPrice();
+
+            buyer.Buy(totalPrice);
 
             AcceptPayment(totalPrice);
 
@@ -127,11 +127,6 @@ namespace OOP9_Supermarket
                 _buyersQueue.Enqueue(buyer);
             }
         }
-
-        private bool HaveQueueBuyer()
-        {
-            return _buyersQueue.Count > 0;
-        }
     }
 
     class Buyer
@@ -158,20 +153,19 @@ namespace OOP9_Supermarket
             _bag.PutProduct(product);
         }
 
-        public void Buy(out int totalPrice)
+        public int GetTotalPrice()
         {
             bool isDealMade = false;
-            totalPrice = 0;
+
+            int totalPrice = 0;
 
             while (isDealMade == false)
             {
+                totalPrice = _basket.GetBasketPrice();
+
                 if (CanPay())
                 {
-                    Pay(out totalPrice);
-
-                    FillBag();
-
-                    isDealMade=true;
+                    isDealMade = true;
                 }
                 else
                 {
@@ -181,6 +175,15 @@ namespace OOP9_Supermarket
                     }
                 }
             }
+
+            return totalPrice;
+        }
+
+        public void Buy(int totalPrice)
+        {
+            Pay(totalPrice);
+
+            FillBag();
         }
 
         private bool CanPay()
@@ -190,15 +193,13 @@ namespace OOP9_Supermarket
 
         private void RemoveRandomProduct()
         {
-            int index = UserUtils.GenerateRandomNumber(0, _basket.GetProductsList().Count);
+            Product product =_basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProductsList().Count));
 
-            _basket.RemoveProduct(index);
+            _basket.RemoveProduct(product);
         }
 
-        private void Pay(out int totalPrice)
+        private void Pay(int totalPrice)
         {
-            totalPrice = _basket.GetBasketPrice();
-
             Cash -= totalPrice;
         }
 
@@ -234,14 +235,19 @@ namespace OOP9_Supermarket
             _products.Add(product);
         }
 
+        public Product GetProduct(int index)
+        {
+            return _products[index];
+        }
+
         public List<Product> GetProductsList()
         {
             return _products.ToList();
         }
 
-        public void RemoveProduct(int index)
+        public void RemoveProduct(Product product)
         {
-            _products.RemoveAt(index);
+            _products.Remove(product);
         }
 
         public int GetBasketPrice()
