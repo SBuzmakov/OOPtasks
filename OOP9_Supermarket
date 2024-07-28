@@ -1,3 +1,5 @@
+using System;
+
 namespace OOP9_Supermarket
 {
     internal class Program
@@ -62,8 +64,6 @@ namespace OOP9_Supermarket
 
         private List<Product> GetAssortmentCopy()
         {
-            List<Product> assortmentCopy = new List<Product>();
-
             return _assortment.ToList();
         }
 
@@ -72,8 +72,6 @@ namespace OOP9_Supermarket
             if (HaveQueueBuyer())
             {
                 Buyer buyer = _buyersQueue.Dequeue();
-
-                List<Product> productList = buyer.PresentBasket();
 
                 MakeDeal(buyer);
             }
@@ -87,49 +85,27 @@ namespace OOP9_Supermarket
 
         private void MakeDeal(Buyer buyer)
         {
-            List<Product> productsList = buyer.PresentBasket();
+            buyer.Buy(out int totalPrice);
 
-            int totalPrice = GetBasketTotalPrice(productsList);
+            AcceptPayment(totalPrice);
 
-            bool isDealMade = false;
-
-            while (isDealMade == false)
-            {
-                if (IsMoneyEnough(buyer.Cash,  totalPrice) && productsList.Count > 0)
-                {
-                    buyer.Buy(totalPrice, productsList);
-
-                    AcceptPayment(totalPrice);
-
-                    isDealMade = true;
-                }
-                else
-                {
-                    if (productsList.Count > 0)
-                    {
-                        buyer.RemoveRandomProduct(productsList);
-
-                        totalPrice = GetBasketTotalPrice(productsList);
-                    }
-                    else
-                    {
-                        Console.WriteLine("денег ни на что не хватает");
-                        Console.ReadLine();
-                        isDealMade = true;
-                    }
-                }
-            }
-
-            ShowDealResult(totalPrice, productsList);
+            ShowDealResult(totalPrice, buyer.PresentBasket());
         }
 
         private void ShowDealResult(int totalPrice, List<Product> products)
         {
-            Console.WriteLine($"Были проданы за {totalPrice}");
-
-            foreach (Product product in products)
+            if (totalPrice == 0)
             {
-                Console.Write($"{product.Name} ");
+                Console.WriteLine("денег ни на что не хватило");               
+            }
+            else
+            {
+                Console.WriteLine($"Были проданы за {totalPrice}");
+
+                foreach (Product product in products)
+                {
+                    Console.Write($"{product.Name} ");
+                }
             }
 
             Console.ReadLine();
@@ -138,23 +114,6 @@ namespace OOP9_Supermarket
         private void AcceptPayment(int cash)
         {
             _revenue += cash;
-        }
-
-        private bool IsMoneyEnough(int buyersCash, int totalPrice)
-        {
-            return buyersCash >= totalPrice;
-        }
-
-        private int GetBasketTotalPrice(List<Product> products)
-        {
-            int totalPrice = 0;
-
-            for (int i = 0; i < products.Count; i++)
-            {
-                totalPrice += products[i].Price;
-            }
-
-            return totalPrice;
         }
 
         private void FormQueue()
@@ -194,33 +153,58 @@ namespace OOP9_Supermarket
             return _basket.GetProductsList();
         }
 
-        public void RemoveRandomProduct(List<Product> productsList)
-        {
-            int index = UserUtils.GenerateRandomNumber(0, productsList.Count);
-
-            productsList.RemoveAt(index);
-        }
-
         public void TakeProduct(Product product)
         {
             _bag.PutProduct(product);
         }
 
-        public void Buy(int price, List<Product> productsList)
+        public void Buy(out int totalPrice)
         {
-            Pay(price);
+            bool isDealMade = false;
+            totalPrice = 0;
 
-            FillBag(productsList);
+            while (isDealMade == false)
+            {
+                if (CanPay())
+                {
+                    Pay(out totalPrice);
+
+                    FillBag();
+
+                    isDealMade=true;
+                }
+                else
+                {
+                    if (_basket.GetProductsList().Count > 0)
+                    {
+                        RemoveRandomProduct();
+                    }
+                }
+            }
         }
 
-        private void Pay(int price)
+        private bool CanPay()
         {
-            Cash -= price;
+            return Cash >= _basket.GetBasketPrice();
         }
 
-        private void FillBag(List<Product> productList)
+        private void RemoveRandomProduct()
         {
-            foreach (Product product in productList)
+            int index = UserUtils.GenerateRandomNumber(0, _basket.GetProductsList().Count);
+
+            _basket.RemoveProduct(index);
+        }
+
+        private void Pay(out int totalPrice)
+        {
+            totalPrice = _basket.GetBasketPrice();
+
+            Cash -= totalPrice;
+        }
+
+        private void FillBag()
+        {
+            foreach (Product product in _basket.GetProductsList())
             {
                 TakeProduct(product);
             }
@@ -253,6 +237,23 @@ namespace OOP9_Supermarket
         public List<Product> GetProductsList()
         {
             return _products.ToList();
+        }
+
+        public void RemoveProduct(int index)
+        {
+            _products.RemoveAt(index);
+        }
+
+        public int GetBasketPrice()
+        {
+            int totalPrice = 0;
+
+            foreach (Product product in _products)
+            {
+                totalPrice += product.Price;
+            }
+
+            return totalPrice;
         }
     }
 
