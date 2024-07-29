@@ -90,7 +90,7 @@ namespace OOP9_Supermarket
 
             AcceptPayment(totalPrice);
 
-            ShowDealResult(totalPrice, buyer.PresentBasket());
+            ShowDealResult(totalPrice, buyer.PresentBag());
         }
 
         private void ShowDealResult(int totalPrice, List<Product> products)
@@ -144,9 +144,9 @@ namespace OOP9_Supermarket
 
         public int Cash {  get; private set; }
 
-        public List<Product> PresentBasket()
+        public List<Product> PresentBag()
         {
-            return _basket.GetProductsList();
+            return _bag.GetProductsList();
         }
 
         public void TakeProduct(Product product)
@@ -209,6 +209,8 @@ namespace OOP9_Supermarket
             foreach (Product product in _basket.GetProductsList())
             {
                 TakeProduct(product);
+
+                _basket.RemoveProduct(product);
             }
         }
 
