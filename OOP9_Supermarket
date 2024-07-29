@@ -18,16 +18,17 @@ namespace OOP9_Supermarket
         private int _maxQueueSize = 5;
         private Queue<Buyer> _buyersQueue = new Queue<Buyer>();
         private List<Product> _assortment = new List<Product>();
-        private bool _haveQueueBuyer => _buyersQueue.Count > 0;
 
         public Supermarket()
         {
             _assortment = new List<Product>() {new Product("сыр", 250), new Product("хлеб", 50), new Product("колбаса", 300),new Product("чай", 350), new Product("масло", 400) };
         }
 
+        private bool HaveQueueBuyer => _buyersQueue.Count > 0;
+
         public void Work()
         {
-            const ConsoleKey ServeBuyerCommand = ConsoleKey.Enter;
+            const ConsoleKey ServeCommand = ConsoleKey.Enter;
             const ConsoleKey FormQueueCommand = ConsoleKey.Q;
             const ConsoleKey ExitCommand = ConsoleKey.Escape;
 
@@ -39,7 +40,7 @@ namespace OOP9_Supermarket
 
                 Console.WriteLine($"Прибыль магазина: {_revenue}\n");
                 Console.WriteLine($"в данный момент в очереди {_buyersQueue.Count} человек\n");
-                Console.WriteLine($"нажмите {ExitCommand} - для выхода\n {FormQueueCommand} - впустить очередь\n {ServeBuyerCommand} - обслужить покупателя");
+                Console.WriteLine($"нажмите {ExitCommand} - для выхода\n {FormQueueCommand} - впустить очередь\n {ServeCommand} - обслужить покупателя");
 
                 ConsoleKeyInfo charKey = Console.ReadKey();
 
@@ -53,7 +54,7 @@ namespace OOP9_Supermarket
                         FormQueue();
                         break;
 
-                    case ServeBuyerCommand:
+                    case ServeCommand:
                         Serve();
                         break;
                 }
@@ -67,7 +68,7 @@ namespace OOP9_Supermarket
 
         private void Serve()
         {
-            if (_haveQueueBuyer)
+            if (HaveQueueBuyer)
             {
                 Buyer buyer = _buyersQueue.Dequeue();
 
