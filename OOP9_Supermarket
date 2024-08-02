@@ -1,4 +1,5 @@
 using System;
+using System.Runtime;
 
 namespace OOP9_Supermarket
 {
@@ -82,15 +83,38 @@ namespace OOP9_Supermarket
             }
         }
 
+        private int GetBasketPrice(Buyer buyer)
+        {
+            int basketPrice = 0;
+
+            foreach (Product product in buyer.GetBasketProducts())
+            {
+                basketPrice += product.Price;
+
+            }
+
+            return basketPrice;
+        }
+
+        private void RemoveExcessProducts(Buyer buyer)
+        {
+            while (buyer.CanPay(GetBasketPrice(buyer)) == false && buyer.GetBasketProducts().Count > 0)
+            {                
+                buyer.RemoveRandomProduct();                  
+            }
+        } 
+
         private void MakeDeal(Buyer buyer)
         {
-            int totalPrice = buyer.GetTotalPrice();
+            RemoveExcessProducts(buyer);
 
-            buyer.Buy(totalPrice);
+            int totalPrice = GetBasketPrice(buyer);
+
+            buyer.BuyProducts(buyer.GetBasketProducts(), totalPrice);
 
             AcceptPayment(totalPrice);
 
-            ShowDealResult(totalPrice, buyer.PresentBag());
+            ShowDealResult(totalPrice, buyer.GetBagsProducts());
         }
 
         private void ShowDealResult(int totalPrice, List<Product> products)
@@ -144,59 +168,37 @@ namespace OOP9_Supermarket
 
         public int Cash {  get; private set; }
 
-        public List<Product> PresentBag()
+        public List<Product> GetBagsProducts()
         {
             return _bag.GetProductsList();
+        }
+
+        public List<Product> GetBasketProducts()
+        {
+            return _basket.GetProductsList();
         }
 
         public void TakeProduct(Product product)
         {
             _bag.PutProduct(product);
         }
-
-        public int GetTotalPrice()
+        public void RemoveRandomProduct()
         {
-            bool isDealMade = false;
+            Product product = _basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProductsList().Count));
 
-            int totalPrice = 0;
-
-            while (isDealMade == false)
-            {
-                totalPrice = _basket.GetBasketPrice();
-
-                if (CanPay())
-                {
-                    isDealMade = true;
-                }
-                else
-                {
-                    if (_basket.GetProductsList().Count > 0)
-                    {
-                        RemoveRandomProduct();
-                    }
-                }
-            }
-
-            return totalPrice;
+            _basket.RemoveProduct(product);
         }
 
-        public void Buy(int totalPrice)
+        public void BuyProducts(List<Product> products, int totalPrice)
         {
             Pay(totalPrice);
 
-            FillBag();
+            FillBag(products);
         }
 
-        private bool CanPay()
+        public bool CanPay(int totalPrice)
         {
-            return Cash >= _basket.GetBasketPrice();
-        }
-
-        private void RemoveRandomProduct()
-        {
-            Product product =_basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProductsList().Count));
-
-            _basket.RemoveProduct(product);
+            return Cash >= totalPrice;
         }
 
         private void Pay(int totalPrice)
@@ -204,9 +206,9 @@ namespace OOP9_Supermarket
             Cash -= totalPrice;
         }
 
-        private void FillBag()
+        private void FillBag(List<Product> products)
         {
-            foreach (Product product in _basket.GetProductsList())
+            foreach (Product product in products)
             {
                 TakeProduct(product);
 
@@ -251,18 +253,6 @@ namespace OOP9_Supermarket
         public void RemoveProduct(Product product)
         {
             _products.Remove(product);
-        }
-
-        public int GetBasketPrice()
-        {
-            int totalPrice = 0;
-
-            foreach (Product product in _products)
-            {
-                totalPrice += product.Price;
-            }
-
-            return totalPrice;
         }
     }
 
