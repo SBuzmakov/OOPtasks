@@ -158,10 +158,11 @@ namespace OOP9_Supermarket
     {
         private Bag _bag = new Bag();
         private Bag _basket = new Bag();
+        private int _maxCash = 2000;
 
         public Buyer(List<Product> assortment)
         {
-            Cash = UserUtils.GenerateRandomNumber(0, 2000);
+            Cash = UserUtils.GenerateRandomNumber(0, _maxCash);
 
             _basket = FillBasket(assortment);
         }
@@ -170,17 +171,17 @@ namespace OOP9_Supermarket
 
         public List<Product> GetBagProducts()
         {
-            return _bag.GetProductsList();
+            return _bag.GetProducts();
         }
 
         public List<Product> GetBasketProducts()
         {
-            return _basket.GetProductsList();
+            return _basket.GetProducts();
         }
 
         public void RemoveRandomProduct()
         {
-            Product product = _basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProductsList().Count));
+            Product product = _basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProducts().Count));
 
             _basket.RemoveProduct(product);
         }
@@ -209,7 +210,7 @@ namespace OOP9_Supermarket
 
         private void FillBag()
         {
-            foreach (Product product in _basket.GetProductsList())
+            foreach (Product product in _basket.GetProducts())
             {
                 TakeProduct(product);
 
@@ -238,7 +239,10 @@ namespace OOP9_Supermarket
 
         public void PutProduct(Product product)
         {
-            _products.Add(product);
+            if (product != null)
+            {
+                _products.Add(product);
+            }
         }
 
         public Product GetProduct(int index)
@@ -246,14 +250,17 @@ namespace OOP9_Supermarket
             return _products[index];
         }
 
-        public List<Product> GetProductsList()
+        public List<Product> GetProducts()
         {
             return _products.ToList();
         }
 
         public void RemoveProduct(Product product)
         {
-            _products.Remove(product);
+            if (product != null)
+            {
+                _products.Remove(product);
+            }
         }
     }
 
