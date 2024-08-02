@@ -83,32 +83,12 @@ namespace OOP9_Supermarket
             }
         }
 
-        private int CalculateBasketPrice(List <Product> products)
-        {
-            int basketPrice = 0;
-
-            foreach (Product product in products)
-            {
-                basketPrice += product.Price;
-
-            }
-
-            return basketPrice;
-        }
-
-        private void RemoveExcessProducts(Buyer buyer)
-        {
-            while (buyer.CanPay(CalculateBasketPrice(buyer.GetBasketProducts())) == false && buyer.GetBasketProducts().Count > 0)
-            {                
-                buyer.RemoveRandomProduct();                  
-            }
-        } 
-
         private void MakeDeal(Buyer buyer)
         {
-            RemoveExcessProducts(buyer);
 
-            int totalPrice = CalculateBasketPrice(buyer.GetBasketProducts());
+            buyer.RemoveExcessProducts();
+
+            int totalPrice = buyer.CalculateBasketPrice();
 
             buyer.BuyProducts(totalPrice);
 
@@ -174,17 +154,6 @@ namespace OOP9_Supermarket
             return _bag.GetProducts();
         }
 
-        public List<Product> GetBasketProducts()
-        {
-            return _basket.GetProducts();
-        }
-
-        public void RemoveRandomProduct()
-        {
-            Product product = _basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProducts().Count));
-
-            _basket.RemoveProduct(product);
-        }
 
         public void BuyProducts(int totalPrice)
         {
@@ -193,9 +162,42 @@ namespace OOP9_Supermarket
             FillBag();
         }
 
-        public bool CanPay(int totalPrice)
+        public void RemoveExcessProducts()
+        {
+            while (CanPay(CalculateBasketPrice()) == false && GetBasketProducts().Count > 0)
+            {
+                RemoveRandomProduct();
+            }
+        }
+
+        public int CalculateBasketPrice()
+        {
+            int basketPrice = 0;
+
+            foreach (Product product in _basket.GetProducts())
+            {
+                basketPrice += product.Price;
+
+            }
+
+            return basketPrice;
+        }
+
+        private List<Product> GetBasketProducts()
+        {
+            return _basket.GetProducts();
+        }
+
+        private bool CanPay(int totalPrice)
         {
             return Cash >= totalPrice;
+        }
+
+        private void RemoveRandomProduct()
+        {
+            Product product = _basket.GetProduct(UserUtils.GenerateRandomNumber(0, _basket.GetProductsCount()));
+
+            _basket.RemoveProduct(product);
         }
 
         private void TakeProduct(Product product)
@@ -243,6 +245,11 @@ namespace OOP9_Supermarket
             {
                 _products.Add(product);
             }
+        }
+
+        public int GetProductsCount()
+        {
+            return _products.Count;
         }
 
         public Product GetProduct(int index)
