@@ -1,0 +1,304 @@
+namespace OOP10_War;
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        Arena arena = new Arena("platoon1", "platoon2");
+
+        arena.BeginBattle();
+
+        Console.ReadLine();
+    }
+}
+
+public class Soldier
+{
+    protected int Damage = 10;
+    
+    private string _name;
+    private int _armor = 5;
+    private string _platoonAffilation;
+
+    public Soldier(string name, string platoon)
+    {
+        _name = name;
+        _platoonAffilation = platoon;
+    }
+
+    private int Health { get; set; } = 100;
+    public bool IsAlive => Health > 0;
+
+    public void ShowStats()
+    {
+        Console.WriteLine($"{_name}  hp: {Health}");
+    }
+
+    public void Attack(Platoon attackedPlatoon)
+    {
+        if (attackedPlatoon.GetCount() <= 0)
+        {
+            return;
+        }
+
+        Console.WriteLine($"атакует {_name} взвода {_platoonAffilation}");
+
+        List<Soldier> attackedSoldiers = ChooseEnemies(attackedPlatoon);
+
+        foreach (Soldier soldier in attackedSoldiers)
+        {
+            soldier.TakeDamage(Damage);
+        }
+    }
+
+    protected virtual List<Soldier> ChooseEnemies(Platoon attackedPlatoon)
+    {
+        List<Soldier> attackedSoldiers = new List<Soldier>();
+
+        int index = UserUtils.GenerateRandomNumber(0, attackedPlatoon.GetCount());
+
+        if (attackedPlatoon.GetSoldier(index).IsAlive)
+        {
+            attackedSoldiers.Add(attackedPlatoon.GetSoldier(index));
+        }
+
+        return attackedSoldiers;
+    }
+
+    private void TakeDamage(int damage)
+    {
+        if (_armor >= damage)
+        {
+            return;
+        }
+
+        int totalDamage = damage - _armor;
+
+        if (Health - totalDamage <= 0)
+        {
+            Health = 0;
+            Console.WriteLine($"солдат {_name} взвода {_platoonAffilation} погиб!");
+        }
+        else
+        {
+            Health -= totalDamage;
+            Console.WriteLine(
+                $"Нанесено {totalDamage} урона солдату {_name} взвода {_platoonAffilation}, осталось {Health}");
+        }
+    }
+}
+
+public class SoldierType2 : Soldier
+{
+    private const int DamageModificator = 2;
+
+    public SoldierType2(string name, string platoon) : base(name, platoon)
+    {
+        Damage *= DamageModificator;
+    }
+}
+
+public class SoldierType3 : Soldier
+{
+    public SoldierType3(string name, string platoon) : base(name, platoon)
+    {
+    }
+
+    protected override List<Soldier> ChooseEnemies(Platoon attackedPlatoon)
+    {
+        List<Soldier> attackedSoldiers = new List<Soldier>();
+
+        for (int i = 0; i < attackedPlatoon.GetCount(); i++)
+        {
+            if (attackedPlatoon.GetSoldier(i).IsAlive)
+            {
+                attackedSoldiers.Add(attackedPlatoon.GetSoldier(i));
+            }
+        }
+
+        return attackedSoldiers;
+    }
+}
+
+public class SoldierType4 : Soldier
+{
+    public SoldierType4(string name, string platoon) : base(name, platoon)
+    {
+    }
+
+    protected override List<Soldier> ChooseEnemies(Platoon attackedPlatoon)
+    {
+        List<Soldier> attackedSoldiers = new List<Soldier>();
+
+        for (int i = 0; i < attackedPlatoon.GetCount(); i++)
+        {
+            int index = UserUtils.GenerateRandomNumber(0, attackedPlatoon.GetCount());
+
+            if (attackedPlatoon.GetSoldier(index).IsAlive)
+            {
+                attackedSoldiers.Add(attackedPlatoon.GetSoldier(index));
+            }
+        }
+
+        return attackedSoldiers;
+    }
+}
+
+public class Platoon
+{
+    private List<Soldier> _soldiers;
+
+    public Platoon(string name)
+    {
+        Name = name;
+        _soldiers = new List<Soldier>()
+        {
+            new Soldier("Soldier type1", Name),
+            new SoldierType2("Soldier type2", Name),
+            new SoldierType3("Soldier type3", Name),
+            new SoldierType4("Soldier type4", Name)
+        };
+    }
+
+    public string Name { get; }
+
+    public int GetCount()
+    {
+        return _soldiers.Count;
+    }
+
+    public Soldier GetSoldier(int index)
+    {
+        return _soldiers[index];
+    }
+
+    public void ShowInfo(int positionX)
+    {
+        int positionY = 1;
+        Console.SetCursorPosition(positionX, 0);
+        Console.WriteLine($"Взвод {Name}:");
+
+        if (_soldiers.Count == 0)
+        {
+            Console.SetCursorPosition(positionX, positionY);
+            Console.WriteLine("Все солдаты взвода погибли.");
+        }
+        else
+        {
+            foreach (Soldier soldier in _soldiers)
+            {
+                Console.SetCursorPosition(positionX, positionY);
+
+                soldier.ShowStats();
+
+                positionY++;
+            }
+        }
+    }
+
+    public void DoTurn(Platoon attackedPlatoon)
+    {
+        Console.Clear();
+
+        if (_soldiers.Count > 0)
+        {
+            Console.WriteLine($"Ход взвода {Name}:");
+
+            Attack(attackedPlatoon);
+
+            Console.ReadLine();
+        }
+
+        attackedPlatoon.RemoveDeadSoldiers();
+    }
+
+    private void Attack(Platoon attackedPlatoon)
+    {
+        foreach (Soldier soldier in _soldiers)
+        {
+            soldier.Attack(attackedPlatoon);
+        }
+    }
+
+    private void RemoveDeadSoldiers()
+    {
+        for (int i = 0; i < _soldiers.Count; i++)
+        {
+            if (_soldiers[i].IsAlive == false)
+            {
+                _soldiers.Remove(_soldiers[i]);
+            }
+        }
+    }
+}
+
+public class Arena
+{
+    private Platoon _platoon1;
+    private Platoon _platoon2;
+
+    public Arena(string namePlatoon1, string namePlatoon2)
+    {
+        _platoon1 = new Platoon(namePlatoon1);
+        _platoon2 = new Platoon(namePlatoon2);
+    }
+
+    public void BeginBattle()
+    {
+        while (_platoon1.GetCount() > 0 && _platoon2.GetCount() > 0)
+        {
+            ShowPlatoons(_platoon1, _platoon2);
+
+            Console.ReadLine();
+
+            _platoon1.DoTurn(_platoon2);
+
+            _platoon2.DoTurn(_platoon1);
+
+            Console.Clear();
+        }
+
+        ShowWinner(_platoon1, _platoon2);
+    }
+
+
+    private void ShowPlatoons(Platoon platoon1, Platoon platoon2)
+    {
+        const int Platoon2PositionX = 40;
+
+        platoon1.ShowInfo(0);
+
+        platoon2.ShowInfo(Platoon2PositionX);
+    }
+
+    private void ShowWinner(Platoon platoon1, Platoon platoon2)
+    {
+        ShowPlatoons(_platoon1, _platoon2);
+
+        Console.ReadLine();
+        Console.Clear();
+
+        if (platoon1.GetCount() == 0 && platoon2.GetCount() == 0)
+        {
+            Console.WriteLine("оба взвода погибли.");
+        }
+        else if (platoon1.GetCount() > 0)
+        {
+            Console.WriteLine($"Победитель - взвод {platoon1.Name}");
+        }
+        else
+        {
+            Console.WriteLine($"Победитель взвод {platoon2.Name}");
+        }
+    }
+}
+
+public static class UserUtils
+{
+    private static Random s_random = new Random();
+
+    public static int GenerateRandomNumber(int min, int max)
+    {
+        return s_random.Next(min, max);
+    }
+}
