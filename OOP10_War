@@ -6,7 +6,7 @@ public class Program
     {
         Arena arena = new Arena("platoon1", "platoon2");
 
-        arena.BeginBattle();
+        arena.Battle();
 
         Console.ReadLine();
     }
@@ -233,11 +233,11 @@ public class Arena
         _platoon2 = new Platoon(namePlatoon2);
     }
 
-    private bool CanFight => _platoon1.GetSoldiers().Count > 0 && _platoon2.GetSoldiers().Count > 0;
+    private bool CanBattle => _platoon1.GetSoldiers().Count > 0 && _platoon2.GetSoldiers().Count > 0;
 
-    public void BeginBattle()
+    public void Battle()
     {
-        while (CanFight)
+        while (CanBattle)
         {
             ShowPlatoons(_platoon1, _platoon2);
 
