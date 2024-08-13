@@ -243,9 +243,11 @@ public class Arena
         _platoon2 = new Platoon(namePlatoon2);
     }
 
+    private bool CanFight => _platoon1.GetCount() > 0 && _platoon2.GetCount() > 0;
+
     public void BeginBattle()
     {
-        while (_platoon1.GetCount() > 0 && _platoon2.GetCount() > 0)
+        while (CanFight)
         {
             ShowPlatoons(_platoon1, _platoon2);
 
