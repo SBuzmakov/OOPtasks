@@ -19,6 +19,7 @@ public class Soldier
     private string _name;
     private int _armor = 5;
     private string _platoonAffilation;
+    private int _health = 100;
 
     public Soldier(string name, string platoon)
     {
@@ -26,24 +27,23 @@ public class Soldier
         _platoonAffilation = platoon;
     }
 
-    private int Health { get; set; } = 100;
-    public bool IsAlive => Health > 0;
+    public bool IsAlive => _health > 0;
 
     public void ShowStats()
     {
-        Console.WriteLine($"{_name}  hp: {Health}");
+        Console.WriteLine($"{_name}  hp: {_health}");
     }
 
-    public void Attack(Platoon attackedPlatoon)
+    public void Attack(List<Soldier> enemySoldiers)
     {
-        if (attackedPlatoon.GetSoldiers().Count <= 0)
+        if (enemySoldiers.Count <= 0)
         {
             return;
         }
 
         Console.WriteLine($"атакует {_name} взвода {_platoonAffilation}");
 
-        List<Soldier> attackedSoldiers = ChooseEnemies(attackedPlatoon);
+        List<Soldier> attackedSoldiers = ChooseEnemies(enemySoldiers);
 
         foreach (Soldier soldier in attackedSoldiers)
         {
@@ -51,18 +51,23 @@ public class Soldier
         }
     }
 
-    protected virtual List<Soldier> ChooseEnemies(Platoon attackedPlatoon)
+    protected virtual List<Soldier> ChooseEnemies(List<Soldier> enemySoldiers)
     {
         List<Soldier> attackedSoldiers = new List<Soldier>();
 
-        int index = UserUtils.GenerateRandomNumber(0, attackedPlatoon.GetSoldiers().Count);
+        int index = UserUtils.GenerateRandomNumber(0, enemySoldiers.Count);
 
-        if (attackedPlatoon.GetSoldiers()[index].IsAlive)
-        {
-            attackedSoldiers.Add(attackedPlatoon.GetSoldiers()[index]);
-        }
+        AddAliveSoldier(enemySoldiers, index, attackedSoldiers);
 
         return attackedSoldiers;
+    }
+
+    protected void AddAliveSoldier(List<Soldier> enemySoldiers, int index, List<Soldier> attackedSoldiers)
+    {
+        if (enemySoldiers[index].IsAlive)
+        {
+            attackedSoldiers.Add(enemySoldiers[index]);
+        }
     }
 
     private void TakeDamage(int damage)
@@ -74,16 +79,16 @@ public class Soldier
 
         int totalDamage = damage - _armor;
 
-        if (Health - totalDamage <= 0)
+        if (_health - totalDamage <= 0)
         {
-            Health = 0;
+            _health = 0;
             Console.WriteLine($"солдат {_name} взвода {_platoonAffilation} погиб!");
         }
         else
         {
-            Health -= totalDamage;
+            _health -= totalDamage;
             Console.WriteLine(
-                $"Нанесено {totalDamage} урона солдату {_name} взвода {_platoonAffilation}, осталось {Health}");
+                $"Нанесено {totalDamage} урона солдату {_name} взвода {_platoonAffilation}, осталось {_health}");
         }
     }
 }
@@ -104,16 +109,13 @@ public class SplashDamager : Soldier
     {
     }
 
-    protected override List<Soldier> ChooseEnemies(Platoon attackedPlatoon)
+    protected override List<Soldier> ChooseEnemies(List<Soldier> enemySoldiers)
     {
         List<Soldier> attackedSoldiers = new List<Soldier>();
 
-        for (int i = 0; i < attackedPlatoon.GetSoldiers().Count; i++)
+        for (int i = 0; i < enemySoldiers.Count; i++)
         {
-            if (attackedPlatoon.GetSoldiers()[i].IsAlive)
-            {
-                attackedSoldiers.Add(attackedPlatoon.GetSoldiers()[i]);
-            }
+            AddAliveSoldier(enemySoldiers, index: i, attackedSoldiers);
         }
 
         return attackedSoldiers;
@@ -126,18 +128,15 @@ public class RandomDamager : Soldier
     {
     }
 
-    protected override List<Soldier> ChooseEnemies(Platoon attackedPlatoon)
+    protected override List<Soldier> ChooseEnemies(List<Soldier> enemySoldiers)
     {
         List<Soldier> attackedSoldiers = new List<Soldier>();
 
-        for (int i = 0; i < attackedPlatoon.GetSoldiers().Count; i++)
+        for (int i = 0; i < enemySoldiers.Count; i++)
         {
-            int index = UserUtils.GenerateRandomNumber(0, attackedPlatoon.GetSoldiers().Count);
+            int index = UserUtils.GenerateRandomNumber(0, enemySoldiers.Count);
 
-            if (attackedPlatoon.GetSoldiers()[index].IsAlive)
-            {
-                attackedSoldiers.Add(attackedPlatoon.GetSoldiers()[index]);
-            }
+            AddAliveSoldier(enemySoldiers, index, attackedSoldiers);
         }
 
         return attackedSoldiers;
@@ -151,7 +150,7 @@ public class Platoon
     public Platoon(string name)
     {
         Name = name;
-        
+
         _soldiers = new List<Soldier>()
         {
             new Soldier("Soldier type1", Name),
@@ -192,26 +191,26 @@ public class Platoon
         }
     }
 
-    public void DoTurn(Platoon attackedPlatoon)
+    public void DoTurn(List<Soldier> enemySoldiers)
     {
         Console.Clear();
-
-        if (_soldiers.Count > 0)
+        
+        if (enemySoldiers.Count <= 0)
         {
-            Console.WriteLine($"Ход взвода {Name}:");
-
-            foreach (Soldier soldier in _soldiers)
-            {
-                soldier.Attack(attackedPlatoon);
-            }
-
-            Console.ReadLine();
+            return;
         }
 
-        attackedPlatoon.RemoveDeadSoldiers();
+        Console.WriteLine($"Ход взвода {Name}:");
+
+        foreach (Soldier soldier in enemySoldiers)
+        {
+            soldier.Attack(enemySoldiers);
+        }
+
+        Console.ReadLine();
     }
 
-    private void RemoveDeadSoldiers()
+    public void RemoveDeadSoldiers()
     {
         for (int i = _soldiers.Count - 1; i >= 0; i--)
         {
@@ -244,9 +243,13 @@ public class Arena
 
             Console.ReadLine();
 
-            _platoon1.DoTurn(_platoon2);
+            _platoon1.DoTurn(_platoon2.GetSoldiers());
 
-            _platoon2.DoTurn(_platoon1);
+            _platoon2.RemoveDeadSoldiers();
+            
+            _platoon2.DoTurn(_platoon1.GetSoldiers());
+            
+            _platoon1.RemoveDeadSoldiers();
 
             Console.Clear();
         }
