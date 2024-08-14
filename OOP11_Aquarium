@@ -183,11 +183,11 @@ public class Owner
 
 public static class UniqueIdGenerator
 {
-    private static int _id;
+    private static int s_id;
     
     public static int GetNextIndex()
     {
-        return _id++;
+        return s_id++;
     }
 }
 
