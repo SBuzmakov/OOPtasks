@@ -1,0 +1,216 @@
+namespace OOP11_Aquarium;
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        Owner owner = new Owner();
+        owner.EngageAquarium();
+    }
+}
+
+public class Fish
+{
+    private const int MaxCycleAge = 5;
+
+    public Fish(int age, int index)
+    {
+        Age = age;
+        Index = index;
+    }
+
+    public int Index { get; private set; }
+    private int Age { get; set; }
+    private bool IsAlive => Age <= MaxCycleAge;
+
+    public void IncreaseAge()
+    {
+        Age++;
+    }
+
+    public void ShowInfo()
+    {
+        Console.WriteLine($"Рыбка {Index}: возраст {Age}.{GetLifeStatus()}");
+    }
+
+    private string GetLifeStatus()
+    {
+        return IsAlive ? "Жива" : "Умерла";
+    }
+}
+
+public class Aquarium
+{
+    private List<Fish> _fishes = new List<Fish>();
+    public int MaxFishes { get; private set; } = 10;
+    public int FishesCount => _fishes.Count;
+
+    public void ShowInfo()
+    {
+        Console.WriteLine("Аквариум:");
+
+        if (_fishes.Count == 0)
+        {
+            Console.WriteLine("Аквариум пуст\n");
+            return;
+        }
+
+        foreach (Fish fish in _fishes)
+        {
+            fish.ShowInfo();
+        }
+    }
+
+    public List<Fish> GetFishes()
+    {
+        return _fishes.ToList();
+    }
+
+    public void RemoveFish(Fish fish)
+    {
+        _fishes.Remove(fish);
+    }
+
+    public void AddFish(Fish fish)
+    {
+        _fishes.Add(fish);
+    }
+}
+
+public class Owner
+{
+    private Aquarium _aquarium = new Aquarium();
+
+    public void EngageAquarium()
+    {
+        bool isWork = true;
+
+        while (isWork)
+        {
+            _aquarium.ShowInfo();
+
+            ManageAquarium(ref isWork);
+
+            Console.ReadLine();
+            Console.Clear();
+        }
+    }
+
+    private void PutNewFish()
+    {
+        if (_aquarium.FishesCount == _aquarium.MaxFishes)
+        {
+            Console.WriteLine("В аквариуме максимальное количество рыбок!");
+            return;
+        }
+
+        Fish fish = new Fish(0, UserUtils.GetNextIndex());
+
+        _aquarium.AddFish(fish);
+    }
+
+    private Fish? ChooseFish()
+    {
+        Console.WriteLine("Выберите индекс рыбки:");
+
+        int userInput = UserUtils.GetUserInputInt();
+
+        foreach (Fish fish in _aquarium.GetFishes())
+        {
+            if (fish.Index == userInput)
+            {
+                return fish;
+            }
+        }
+
+        
+        return null;
+    }
+
+    private void TakeOutFish()
+    {
+        Fish? fish = ChooseFish();
+        
+        if (fish == null)
+        {
+            Console.WriteLine("Такой рыбки нет.");
+            return;
+        }
+
+        _aquarium.RemoveFish(fish);
+    }
+
+    private void PassTime()
+    {
+        foreach (Fish fish in _aquarium.GetFishes())
+        {
+            fish.IncreaseAge();
+        }
+    }
+
+    private void ManageAquarium(ref bool isWork)
+    {
+        const ConsoleKey PassTimeCommand = ConsoleKey.D;
+        const ConsoleKey PutNewFishCommand = ConsoleKey.N;
+        const ConsoleKey TakeFishCommand = ConsoleKey.T;
+        const ConsoleKey ExitCommand = ConsoleKey.Escape;
+
+        Console.WriteLine(
+            $"введите команду:\n" +
+            $"{PassTimeCommand} - подождать\n" +
+            $"{PutNewFishCommand} - добавить новую рыбку в аквариум\n" +
+            $"{TakeFishCommand} - вытащить рыбку из аквариума\n" +
+            $"{ExitCommand} - выйти из программы");
+
+        switch (Console.ReadKey().Key)
+        {
+            case PassTimeCommand:
+                PassTime();
+                break;
+
+            case PutNewFishCommand:
+                PutNewFish();
+                break;
+
+            case TakeFishCommand:
+                TakeOutFish();
+                break;
+
+            case ExitCommand:
+                isWork = false;
+                break;
+        }
+    }
+}
+
+public static class UserUtils
+{
+    private static int _index;
+
+    public static int GetUserInputInt()
+    {
+        bool isNumber = false;
+        int parsedNumber = 0;
+
+        while (isNumber == false)
+        {
+            string userInput = Console.ReadLine();
+            isNumber = int.TryParse(userInput, out parsedNumber);
+
+            if (isNumber)
+            {
+                continue;
+            }
+
+            Console.WriteLine("Ошибка! Введите число");
+            Console.ReadKey(true);
+        }
+
+        return parsedNumber;
+    }
+
+    public static int GetNextIndex()
+    {
+        return _index++;
+    }
+}
