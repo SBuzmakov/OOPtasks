@@ -12,38 +12,51 @@ public class Program
 public class Fish
 {
     private const int MaxCycleAge = 5;
-
-    public Fish(int age, int index)
+    private bool _isAlive = true;
+    private int _age;
+    
+    public Fish(int age, int id)
     {
-        Age = age;
-        Index = index;
+        _age = age;
+        Id = id;
     }
 
-    public int Index { get; private set; }
-    private int Age { get; set; }
-    private bool IsAlive => Age <= MaxCycleAge;
+    public int Id { get; private set; }
 
     public void IncreaseAge()
     {
-        Age++;
+        _age++;
+
+        if (_age == MaxCycleAge)
+        {
+            _isAlive = false;
+        }
     }
 
     public void ShowInfo()
     {
-        Console.WriteLine($"Рыбка {Index}: возраст {Age}.{GetLifeStatus()}");
+        Console.WriteLine($"Рыбка {Id}: возраст {_age}.{GetLifeStatus()}");
     }
 
     private string GetLifeStatus()
     {
-        return IsAlive ? "Жива" : "Умерла";
+        return _isAlive ? "Жива" : "Умерла";
     }
 }
 
 public class Aquarium
 {
     private List<Fish> _fishes = new List<Fish>();
-    public int MaxFishes { get; private set; } = 10;
+
+    public Aquarium(int maxFishesCount)
+    {
+        MaxFishesCount = maxFishesCount;
+    }
+
+    public int MaxFishesCount { get; private set; }
+
     public int FishesCount => _fishes.Count;
+    public List<Fish> Fishes => _fishes.ToList();
 
     public void ShowInfo()
     {
@@ -61,25 +74,30 @@ public class Aquarium
         }
     }
 
-    public List<Fish> GetFishes()
-    {
-        return _fishes.ToList();
-    }
-
     public void RemoveFish(Fish fish)
     {
+        if (fish == null)
+        {
+            return;
+        }
+        
         _fishes.Remove(fish);
     }
 
     public void AddFish(Fish fish)
     {
+        if (fish == null)
+        {
+            return;
+        }
+        
         _fishes.Add(fish);
     }
 }
 
 public class Owner
 {
-    private Aquarium _aquarium = new Aquarium();
+    private Aquarium _aquarium = new Aquarium(1);
     private bool _isWork = true;
     
     public void EngageAquarium()
@@ -97,13 +115,13 @@ public class Owner
 
     private void PutNewFishToAquarium()
     {
-        if (_aquarium.FishesCount == _aquarium.MaxFishes)
+        if (_aquarium.FishesCount == _aquarium.MaxFishesCount)
         {
             Console.WriteLine("В аквариуме максимальное количество рыбок!");
             return;
         }
 
-        Fish fish = new Fish(0, UniqueIdGenerator.GetNextIndex());
+        Fish fish = new Fish(0, UniqueIdGenerator.GetNextId());
 
         _aquarium.AddFish(fish);
     }
@@ -114,9 +132,9 @@ public class Owner
 
         int userInput = UserUtils.GetUserInputInt();
 
-        foreach (Fish fish in _aquarium.GetFishes())
+        foreach (Fish fish in _aquarium.Fishes)
         {
-            if (fish.Index == userInput)
+            if (fish.Id == userInput)
             {
                 return fish;
             }
@@ -140,7 +158,7 @@ public class Owner
 
     private void PassTime()
     {
-        foreach (Fish fish in _aquarium.GetFishes())
+        foreach (Fish fish in _aquarium.Fishes)
         {
             fish.IncreaseAge();
         }
@@ -185,7 +203,7 @@ public static class UniqueIdGenerator
 {
     private static int s_id;
     
-    public static int GetNextIndex()
+    public static int GetNextId()
     {
         return s_id++;
     }
@@ -195,19 +213,10 @@ public static class UserUtils
 {
     public static int GetUserInputInt()
     {
-        bool isNumber = false;
         int parsedNumber = 0;
 
-        while (isNumber == false)
+        while (int.TryParse(Console.ReadLine(), out parsedNumber) == false)
         {
-            string userInput = Console.ReadLine();
-            isNumber = int.TryParse(userInput, out parsedNumber);
-
-            if (isNumber)
-            {
-                continue;
-            }
-
             Console.WriteLine("Ошибка! Введите число");
             Console.ReadKey(true);
         }
