@@ -80,23 +80,22 @@ public class Aquarium
 public class Owner
 {
     private Aquarium _aquarium = new Aquarium();
-
+    private bool _isWork = true;
+    
     public void EngageAquarium()
     {
-        bool isWork = true;
-
-        while (isWork)
+        while (_isWork)
         {
             _aquarium.ShowInfo();
 
-            ManageAquarium(ref isWork);
+            ManageAquarium();
 
             Console.ReadLine();
             Console.Clear();
         }
     }
 
-    private void PutNewFish()
+    private void PutNewFishToAquarium()
     {
         if (_aquarium.FishesCount == _aquarium.MaxFishes)
         {
@@ -104,12 +103,12 @@ public class Owner
             return;
         }
 
-        Fish fish = new Fish(0, UserUtils.GetNextIndex());
+        Fish fish = new Fish(0, UniqueIdGenerator.GetNextIndex());
 
         _aquarium.AddFish(fish);
     }
 
-    private Fish? ChooseFish()
+    private Fish? ChooseFishInAquarium()
     {
         Console.WriteLine("Выберите индекс рыбки:");
 
@@ -122,15 +121,14 @@ public class Owner
                 return fish;
             }
         }
-
         
         return null;
     }
 
-    private void TakeOutFish()
+    private void TakeOutFishFromAquarium()
     {
-        Fish? fish = ChooseFish();
-        
+        Fish? fish = ChooseFishInAquarium();
+
         if (fish == null)
         {
             Console.WriteLine("Такой рыбки нет.");
@@ -148,7 +146,7 @@ public class Owner
         }
     }
 
-    private void ManageAquarium(ref bool isWork)
+    private void ManageAquarium()
     {
         const ConsoleKey PassTimeCommand = ConsoleKey.D;
         const ConsoleKey PutNewFishCommand = ConsoleKey.N;
@@ -169,24 +167,32 @@ public class Owner
                 break;
 
             case PutNewFishCommand:
-                PutNewFish();
+                PutNewFishToAquarium();
                 break;
 
             case TakeFishCommand:
-                TakeOutFish();
+                TakeOutFishFromAquarium();
                 break;
 
             case ExitCommand:
-                isWork = false;
+                _isWork = false;
                 break;
         }
     }
 }
 
+public static class UniqueIdGenerator
+{
+    private static int _id;
+    
+    public static int GetNextIndex()
+    {
+        return _id++;
+    }
+}
+
 public static class UserUtils
 {
-    private static int _index;
-
     public static int GetUserInputInt()
     {
         bool isNumber = false;
@@ -207,10 +213,5 @@ public static class UserUtils
         }
 
         return parsedNumber;
-    }
-
-    public static int GetNextIndex()
-    {
-        return _index++;
     }
 }
