@@ -7,7 +7,6 @@ public class Program
         Zoo zoo = new Zoo(20);
 
         zoo.Work();
-        Console.ReadLine();
     }
 }
 
@@ -34,19 +33,20 @@ public class Aviary
 {
     private List<Animal> _animals = new List<Animal>();
     private int _capacity;
-    private AnimalsTypes _type;
 
     public Aviary(int capacity, AnimalsTypes type)
     {
         _capacity = capacity;
-        _type = type;
+        Type = type;
     }
+
+    public AnimalsTypes Type { get; }
 
     public bool IsFilled => _animals.Count == _capacity;
 
     public void ShowInfo()
     {
-        Console.WriteLine($"Вольер {_type}:");
+        Console.WriteLine($"Вольер {Type}:");
 
         foreach (Animal animal in _animals)
         {
@@ -76,8 +76,9 @@ public class Zoo
         _animals = AquireAnimals();
 
         _aviaries = BuildAviaries(AviaryCapacity);
-    }
 
+        FillAviaries();
+    }
 
     public void Work()
     {
@@ -154,12 +155,10 @@ public class Zoo
         List<Animal> sameAnimals = GetSameAnimals(animalType);
 
         int aviariesAmount = GetSameAnimalsAviariesAmount(aviaryCapacity, sameAnimals);
-        
+
         for (int i = 0; i < aviariesAmount; i++)
         {
             Aviary aviary = new Aviary(aviaryCapacity, animalType);
-
-            FillAviary(sameAnimals, aviary);
 
             aviaries.Add(aviary);
         }
@@ -167,14 +166,32 @@ public class Zoo
         return aviaries;
     }
 
-    private static void FillAviary(List<Animal> sameAnimals, Aviary aviary)
+    private void FillAviaries()
     {
-        while (sameAnimals.Count > 0 && aviary.IsFilled == false)
+        for (int i = _animals.Count - 1; i >= 0; i--)
         {
-            aviary.AddAnimal(sameAnimals[0]);
+            Aviary freeAviary = GetFreeAviary(_animals[i].Type);
 
-            sameAnimals.RemoveAt(0);
+            if (freeAviary != null)
+            {
+                freeAviary.AddAnimal(_animals[i]);
+            }
+
+            _animals.Remove(_animals[i]);
         }
+    }
+
+    private Aviary GetFreeAviary(AnimalsTypes type)
+    {
+        for (int i = 0; i < _aviaries.Count; i++)
+        {
+            if (_aviaries[i].Type == type && _aviaries[i].IsFilled == false)
+            {
+                return _aviaries[i];
+            }
+        }
+
+        return null;
     }
 
     private int GetSameAnimalsAviariesAmount(int aviaryCapacity, List<Animal> sameAnimals)
