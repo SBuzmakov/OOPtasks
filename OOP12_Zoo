@@ -1,0 +1,330 @@
+namespace OOP12_Zoo;
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        Zoo zoo = new Zoo(20);
+
+        zoo.Work();
+        Console.ReadLine();
+    }
+}
+
+public class Animal
+{
+    public Animal(AnimalsTypes animalType, AnimalsSex animalSex, AnimalsSounds animalSound)
+    {
+        Type = animalType;
+        Sex = animalSex;
+        SoundMade = animalSound;
+    }
+
+    public AnimalsTypes Type { get; }
+    private AnimalsSex Sex { get; }
+    private AnimalsSounds SoundMade { get; }
+
+    public void ShowInfo()
+    {
+        Console.WriteLine($"Животное: {Type}, пол: {Sex}, издает звук: {SoundMade}");
+    }
+}
+
+public class Aviary
+{
+    private List<Animal> _animals = new List<Animal>();
+    private int _capacity;
+    private AnimalsTypes _type;
+
+    public Aviary(int capacity, AnimalsTypes type)
+    {
+        _capacity = capacity;
+        _type = type;
+    }
+
+    public bool IsFilled => _animals.Count == _capacity;
+
+    public void ShowInfo()
+    {
+        Console.WriteLine($"Вольер {_type}:");
+
+        foreach (Animal animal in _animals)
+        {
+            animal.ShowInfo();
+        }
+    }
+
+    public void AddAnimal(Animal animal)
+    {
+        _animals.Add(animal);
+    }
+}
+
+public class Zoo
+{
+    private const int AviaryCapacity = 5;
+
+    private List<Animal> _animals;
+    private List<Aviary> _aviaries;
+    private int _maxAnimalsAmount;
+    private AnimalFactory _animalFactory = new AnimalFactory();
+
+    public Zoo(int maxAnimalAmount)
+    {
+        _maxAnimalsAmount = maxAnimalAmount;
+
+        _animals = AquireAnimals();
+
+        _aviaries = BuildAviaries(AviaryCapacity);
+    }
+
+
+    public void Work()
+    {
+        const ConsoleKey ExitCommand = ConsoleKey.E;
+
+        bool isWork = true;
+
+        while (isWork)
+        {
+            ShowAviariesList();
+
+            Console.WriteLine($"Выход - {ExitCommand}\n\nКакой вольер посмотреть?");
+
+            int userInput = UserUtils.GetUserInputInt(0, _aviaries.Count - 1);
+
+            _aviaries[userInput].ShowInfo();
+
+            Console.WriteLine($"Выход - {ExitCommand}");
+
+            if (Console.ReadKey().Key == ExitCommand)
+            {
+                isWork = false;
+            }
+
+            Console.Clear();
+        }
+    }
+
+    private void ShowAviariesList()
+    {
+        for (int i = 0; i < _aviaries.Count; i++)
+        {
+            Console.WriteLine($"Вольер {i}");
+        }
+    }
+
+    private List<AnimalsTypes> GetAquiredAnimalsTypes()
+    {
+        List<AnimalsTypes> animalTypes = new List<AnimalsTypes>();
+
+        foreach (Animal animal in _animals)
+        {
+            if (animalTypes.Contains(animal.Type))
+            {
+                continue;
+            }
+
+            animalTypes.Add(animal.Type);
+        }
+
+        return animalTypes;
+    }
+
+    private List<Aviary> BuildAviaries(int aviaryCapacity)
+    {
+        List<Aviary> aviaries = new List<Aviary>();
+
+        List<AnimalsTypes> animalsTypes = GetAquiredAnimalsTypes();
+
+        foreach (AnimalsTypes animalType in animalsTypes)
+        {
+            List<Aviary> sameAnimalAviaries = GetSameAnimalsAviaries(animalType, aviaryCapacity);
+
+            aviaries.AddRange(sameAnimalAviaries);
+        }
+
+        return aviaries;
+    }
+
+    private List<Aviary> GetSameAnimalsAviaries(AnimalsTypes animalType, int aviaryCapacity)
+    {
+        List<Aviary> aviaries = new List<Aviary>();
+
+        List<Animal> sameAnimals = GetSameAnimals(animalType);
+
+        int aviariesAmount = GetSameAnimalsAviariesAmount(aviaryCapacity, sameAnimals);
+        
+        for (int i = 0; i < aviariesAmount; i++)
+        {
+            Aviary aviary = new Aviary(aviaryCapacity, animalType);
+
+            FillAviary(sameAnimals, aviary);
+
+            aviaries.Add(aviary);
+        }
+
+        return aviaries;
+    }
+
+    private static void FillAviary(List<Animal> sameAnimals, Aviary aviary)
+    {
+        while (sameAnimals.Count > 0 && aviary.IsFilled == false)
+        {
+            aviary.AddAnimal(sameAnimals[0]);
+
+            sameAnimals.RemoveAt(0);
+        }
+    }
+
+    private int GetSameAnimalsAviariesAmount(int aviaryCapacity, List<Animal> sameAnimals)
+    {
+        int aviariesAmount = sameAnimals.Count / aviaryCapacity;
+
+        if (sameAnimals.Count % aviaryCapacity > 0)
+        {
+            aviariesAmount++;
+        }
+
+        return aviariesAmount;
+    }
+
+
+    private List<Animal> AquireAnimals()
+    {
+        List<Animal> animals = new List<Animal>();
+
+        for (int i = 0; i < _maxAnimalsAmount; i++)
+        {
+            animals.Add(_animalFactory.CreateAnimal());
+        }
+
+        return animals;
+    }
+
+    private List<Animal> GetSameAnimals(AnimalsTypes animalType)
+    {
+        List<Animal> animals = new List<Animal>();
+
+        for (int i = 0; i < _animals.Count; i++)
+        {
+            if (_animals[i].Type == animalType)
+            {
+                animals.Add(_animals[i]);
+            }
+        }
+
+        return animals;
+    }
+}
+
+public class AnimalFactory
+{
+    private int _animalsTypesAmount;
+
+    public AnimalFactory()
+    {
+        _animalsTypesAmount = Enum.GetNames(typeof(AnimalsTypes)).Length;
+    }
+
+    public Animal CreateAnimal()
+    {
+        AnimalsTypes animalType = GetAnimalType();
+
+        return new Animal(animalType, GetAnimalSex(), GetAnimalSound(animalType));
+    }
+
+    private AnimalsTypes GetAnimalType()
+    {
+        return (AnimalsTypes)UserUtils.GenerateRandomNumber(0, _animalsTypesAmount);
+    }
+
+    private AnimalsSex GetAnimalSex()
+    {
+        int animalsSexAmount = Enum.GetNames(typeof(AnimalsSex)).Length;
+
+        return (AnimalsSex)UserUtils.GenerateRandomNumber(0, animalsSexAmount);
+    }
+
+    private AnimalsSounds GetAnimalSound(AnimalsTypes animalType)
+    {
+        switch (animalType)
+        {
+            case AnimalsTypes.Elephant:
+                return AnimalsSounds.Trumpet;
+
+            case AnimalsTypes.Lion:
+                return AnimalsSounds.Roar;
+
+            case AnimalsTypes.Snake:
+                return AnimalsSounds.Rattle;
+
+            case AnimalsTypes.Wolf:
+                return AnimalsSounds.Howl;
+            default:
+                throw new Exception("Tokovo enimala nema");
+        }
+    }
+}
+
+public static class UserUtils
+{
+    private static Random s_random = new Random();
+
+    public static int GenerateRandomNumber(int min, int max)
+    {
+        return s_random.Next(min, max);
+    }
+
+    public static int GetUserInputInt(int minValue, int maxValue)
+    {
+        bool isNumber = false;
+        int parsedNumber = 0;
+        bool isNumberBelongsRange = false;
+
+        while (isNumber == false && isNumberBelongsRange == false)
+        {
+            string userInput = Console.ReadLine();
+            isNumber = int.TryParse(userInput, out parsedNumber);
+
+            if (parsedNumber >= minValue && parsedNumber <= maxValue)
+            {
+                isNumberBelongsRange = true;
+            }
+
+            if (isNumber && isNumberBelongsRange)
+            {
+                continue;
+            }
+
+            Console.WriteLine("Ошибка! Введите правильный номер.");
+
+            isNumber = false;
+            isNumberBelongsRange = false;
+        }
+
+        return parsedNumber;
+    }
+}
+
+public enum AnimalsTypes
+{
+    Lion,
+    Snake,
+    Wolf,
+    Elephant
+}
+
+public enum AnimalsSex
+{
+    Male,
+    Female
+}
+
+public enum AnimalsSounds
+{
+    Roar,
+    Rattle,
+    Howl,
+    Trumpet
+}
