@@ -176,24 +176,24 @@ public class PricesList
 {
     private Dictionary<DetailTypes, int> _detailsPrices = new Dictionary<DetailTypes, int>()
     {
-        { DetailTypes.СтупичныйПодшипник, 3500 },
-        { DetailTypes.ТормозныеКолодки, 2500 },
-        { DetailTypes.РычагПодвески, 4000 },
-        { DetailTypes.ПоворотныйКулак, 7000 },
-        { DetailTypes.Пружины, 4500 },
-        { DetailTypes.СтойкаСтабилизатора, 3000 },
-        { DetailTypes.Амортизаторы, 5000 }
+        { DetailTypes.Bearings, 3500 },
+        { DetailTypes.BrakePads, 2500 },
+        { DetailTypes.ControlArm, 4000 },
+        { DetailTypes.Knuckle, 7000 },
+        { DetailTypes.Spring, 4500 },
+        { DetailTypes.StabilizerLink, 3000 },
+        { DetailTypes.ShockAbsorber, 5000 }
     };
 
     private Dictionary<DetailTypes, int> _replacementPrices = new Dictionary<DetailTypes, int>()
     {
-        { DetailTypes.СтупичныйПодшипник, 7500 },
-        { DetailTypes.ТормозныеКолодки, 3000 },
-        { DetailTypes.РычагПодвески, 5000 },
-        { DetailTypes.ПоворотныйКулак, 7000 },
-        { DetailTypes.Пружины, 8000 },
-        { DetailTypes.СтойкаСтабилизатора, 3000 },
-        { DetailTypes.Амортизаторы, 8000 }
+        { DetailTypes.Bearings, 7500 },
+        { DetailTypes.BrakePads, 3000 },
+        { DetailTypes.ControlArm, 5000 },
+        { DetailTypes.Knuckle, 7000 },
+        { DetailTypes.Spring, 8000 },
+        { DetailTypes.StabilizerLink, 3000 },
+        { DetailTypes.ShockAbsorber, 8000 }
     };
 
     public int GetDetailPrice(DetailTypes detailType)
@@ -209,14 +209,19 @@ public class PricesList
 
 public class CarFactory
 {
+    private DetailsFactory _detailsFactory = new DetailsFactory();
+    
     public Car CreateCar()
     {
-        List<Detail> details = GetDetails();
+        List<Detail> details = _detailsFactory.CreateDetails();
 
         return new Car(details);
     }
+}
 
-    private List<Detail> GetDetails()
+public class DetailsFactory
+{
+    public List<Detail> CreateDetails()
     {
         List<Detail> details = new List<Detail>();
 
@@ -394,20 +399,23 @@ public class AutoService
 
     private void RepairDetail(WorkOrder workOrder, Car car, Detail detail)
     {
+        int totalPrice = 0;
+        
         if (_storage.TryTakeDetail(detail.Name, out Detail newDetail))
         {
             car.ReplaceDetail(detail, newDetail);
 
             int repairPrice = workOrder.GetRepairDetailPrice(detail);
 
-            IncreaseMoneyBalance(repairPrice);
-
-            Console.WriteLine($"Поменяна деталь: {detail.Name}. Зачислено на баланс: {repairPrice}");
+            totalPrice += repairPrice;
+            Console.WriteLine($"Поменяна деталь: {detail.Name}. Стоимость работ с деталью: {repairPrice}");
         }
         else
         {
             PayForfeit(OneDetailRefusalForfeit);
         }
+        
+        IncreaseMoneyBalance(totalPrice);
     }
 
     private void IncreaseMoneyBalance(int cash)
@@ -496,11 +504,11 @@ public static class UserUtils
 
 public enum DetailTypes
 {
-    Пружины,
-    Амортизаторы,
-    ПоворотныйКулак,
-    СтупичныйПодшипник,
-    СтойкаСтабилизатора,
-    РычагПодвески,
-    ТормозныеКолодки
+    Spring,
+    ShockAbsorber,
+    Knuckle,
+    Bearings,
+    StabilizerLink,
+    ControlArm,
+    BrakePads
 }
