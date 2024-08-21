@@ -1,0 +1,506 @@
+namespace OOP13_Autoservice;
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        Game game = new Game();
+
+        game.Play();
+    }
+}
+
+public class Detail
+{
+    public Detail(DetailTypes name, bool isBroken)
+    {
+        Name = name;
+        IsBroken = isBroken;
+    }
+
+    public bool IsBroken { get; private set; }
+    public DetailTypes Name { get; }
+
+    public void ShowInfo()
+    {
+        Console.WriteLine($"{Name} : {ShowDetailStatus()}");
+    }
+
+    public void Break()
+    {
+        IsBroken = true;
+    }
+
+    public string ShowDetailStatus()
+    {
+        return IsBroken ? "Деталь требует замены!" : "Ok.";
+    }
+}
+
+public class Cell
+{
+    public Cell(Detail detail, int amount)
+    {
+        Detail = detail;
+        Amount = amount;
+    }
+
+    public Detail Detail { get; }
+    public int Amount { get; private set; }
+    public DetailTypes TypeName => Detail.Name;
+
+    public void DecreaseAmount()
+    {
+        Amount--;
+    }
+
+    public void ShowInfo()
+    {
+        Console.WriteLine($"{Detail.Name} : {Amount} шт.");
+    }
+}
+
+public class Storage
+{
+    private const int DefaultDetailsAmount = 50;
+
+    private List<Cell> _detailCells;
+
+    public Storage()
+    {
+        _detailCells = GetOriginalCells();
+    }
+
+    public List<Cell> GetDetailsCells => _detailCells.ToList();
+
+    public void ShowCells()
+    {
+        Console.WriteLine($"\nНаличие деталей на складе:");
+
+        foreach (Cell cell in _detailCells)
+        {
+            cell.ShowInfo();
+        }
+    }
+
+    public bool TryTakeDetail(DetailTypes type, out Detail detail)
+    {
+        Cell cell = GetCell(type);
+
+        if (cell.Amount == 0)
+        {
+            Console.WriteLine("Эти детали закончились");
+            detail = null;
+            return false;
+        }
+
+        detail = cell.Detail;
+        cell.DecreaseAmount();
+        return true;
+    }
+
+    private Cell GetCell(DetailTypes type)
+    {
+        foreach (Cell cell in _detailCells)
+        {
+            if (type == cell.TypeName)
+            {
+                return cell;
+            }
+        }
+
+        return null;
+    }
+
+    private List<Cell> GetOriginalCells()
+    {
+        List<Cell> cells = new List<Cell>();
+        int detailsLenght = Enum.GetNames(typeof(DetailTypes)).Length;
+
+        for (int i = 0; i < detailsLenght; i++)
+        {
+            Detail detail = new Detail((DetailTypes)i, false);
+            cells.Add(new Cell(detail, DefaultDetailsAmount));
+        }
+
+        return cells;
+    }
+}
+
+public class Car
+{
+    private List<Detail> _details;
+
+    public Car(List<Detail> details)
+    {
+        _details = details;
+    }
+
+    public List<Detail> GetBrokenDetails()
+    {
+        List<Detail> brokenDetails = new List<Detail>();
+
+        foreach (Detail detail in _details)
+        {
+            if (detail.IsBroken)
+            {
+                brokenDetails.Add(detail);
+            }
+        }
+
+        return brokenDetails;
+    }
+
+    public void ShowDetails()
+    {
+        foreach (Detail detail in _details)
+        {
+            detail.ShowInfo();
+        }
+    }
+
+    public void ReplaceDetail(Detail brokenDetail, Detail newDetail)
+    {
+        if (_details.Contains(brokenDetail) == false)
+        {
+            return;
+        }
+        
+        _details.Remove(brokenDetail);
+
+        _details.Add(newDetail);
+    }
+}
+
+public class PricesList
+{
+    private Dictionary<DetailTypes, int> _detailsPrices = new Dictionary<DetailTypes, int>()
+    {
+        { DetailTypes.СтупичныйПодшипник, 3500 },
+        { DetailTypes.ТормозныеКолодки, 2500 },
+        { DetailTypes.РычагПодвески, 4000 },
+        { DetailTypes.ПоворотныйКулак, 7000 },
+        { DetailTypes.Пружины, 4500 },
+        { DetailTypes.СтойкаСтабилизатора, 3000 },
+        { DetailTypes.Амортизаторы, 5000 }
+    };
+
+    private Dictionary<DetailTypes, int> _replacementPrices = new Dictionary<DetailTypes, int>()
+    {
+        { DetailTypes.СтупичныйПодшипник, 7500 },
+        { DetailTypes.ТормозныеКолодки, 3000 },
+        { DetailTypes.РычагПодвески, 5000 },
+        { DetailTypes.ПоворотныйКулак, 7000 },
+        { DetailTypes.Пружины, 8000 },
+        { DetailTypes.СтойкаСтабилизатора, 3000 },
+        { DetailTypes.Амортизаторы, 8000 }
+    };
+
+    public int GetDetailPrice(DetailTypes detailType)
+    {
+        return _detailsPrices[detailType];
+    }
+
+    public int GetReplacementPrice(DetailTypes detailType)
+    {
+        return _replacementPrices[detailType];
+    }
+}
+
+public class CarFactory
+{
+    public Car CreateCar()
+    {
+        List<Detail> details = GetDetails();
+
+        return new Car(details);
+    }
+
+    private List<Detail> GetDetails()
+    {
+        List<Detail> details = new List<Detail>();
+
+        for (int i = 0; i < Enum.GetNames(typeof(DetailTypes)).Length; i++)
+        {
+            Detail detail = new Detail((DetailTypes)i, GetRandomDetailStatus());
+
+            details.Add(detail);
+        }
+
+        if (HaveBrokenDetails(details) == false)
+        {
+            BrakeRandomDetail(details);
+        }
+
+        return details;
+    }
+
+    private bool GetRandomDetailStatus()
+    {
+        int maxRange = 2;
+        int randomNumber = UserUtils.GenerateRandomNumber(0, maxRange);
+
+        return Convert.ToBoolean(randomNumber);
+    }
+
+    private bool HaveBrokenDetails(List<Detail> details)
+    {
+        foreach (Detail detail in details)
+        {
+            if (detail.IsBroken)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void BrakeRandomDetail(List<Detail> details)
+    {
+        int randomIndex = UserUtils.GenerateRandomNumber(0, details.Count);
+
+        details[randomIndex].Break();
+    }
+}
+
+public class WorkOrder
+{
+    private PricesList _pricesList;
+    private List<Detail> _brokenDetails;
+
+    public WorkOrder(Car car, PricesList pricesList)
+    {
+        _pricesList = pricesList;
+
+        _brokenDetails = car.GetBrokenDetails();
+    }
+
+    public List<Detail> BrokenDetails => _brokenDetails.ToList();
+
+    public void ShowTasks()
+    {
+        Console.WriteLine("Найденные неисправности:");
+
+        for (int i = 0; i < _brokenDetails.Count; i++)
+        {
+            Console.WriteLine($"{i}.{_brokenDetails[i].Name} : {_brokenDetails[i].ShowDetailStatus()}. " +
+                              $"Цена запчасти: {_pricesList.GetDetailPrice(_brokenDetails[i].Name)}." +
+                              $" Цена замены: {_pricesList.GetReplacementPrice(_brokenDetails[i].Name)}");
+        }
+
+        Console.ReadLine();
+    }
+
+    public int GetRepairDetailPrice(Detail detail)
+    {
+        return _pricesList.GetDetailPrice(detail.Name) + _pricesList.GetReplacementPrice(detail.Name);
+    }
+}
+
+public class AutoService
+{
+    private const int RefusalForfeit = 10000;
+    private const int OneDetailRefusalForfeit = 4000;
+
+    private PricesList _pricesList = new PricesList();
+    private Storage _storage = new Storage();
+
+    public int MoneyBalance { get; private set; }
+
+    public void WorkOnCar(Car car)
+    {
+        Console.Clear();
+        Console.WriteLine("Осмотр автомобиля:\n");
+
+        car.ShowDetails();
+
+        Console.ReadLine();
+
+        WorkOrder workOrder = new WorkOrder(car, _pricesList);
+
+        workOrder.ShowTasks();
+
+        ManageRepair(workOrder, car);
+
+        Console.Clear();
+
+        Console.WriteLine("Ремонт автомобиля закончен:");
+
+        car.ShowDetails();
+
+        Console.ReadLine();
+    }
+
+    private void ManageRepair(WorkOrder workOrder, Car car)
+    {
+        const ConsoleKey RepairAutoCommand = ConsoleKey.R;
+
+        Console.WriteLine(
+            $"Взяться за обслуживание машины - {RepairAutoCommand}, отказаться и заплатить штраф {RefusalForfeit}- любые другие кнопки");
+
+        switch (Console.ReadKey().Key)
+        {
+            case RepairAutoCommand:
+                RepairAuto(workOrder, car);
+                break;
+
+            default:
+                PayForfeit(RefusalForfeit);
+                break;
+        }
+    }
+
+    private void RepairAuto(WorkOrder workOrder, Car car)
+    {
+        Console.Clear();
+
+        workOrder.ShowTasks();
+
+        for (int i = 0; i < workOrder.BrokenDetails.Count; i++)
+        {
+            ConsiderationDetail(workOrder, car, workOrder.BrokenDetails[i]);
+        }
+    }
+
+    private void PayForfeit(int forfeitPrice)
+    {
+        if (forfeitPrice <= 0)
+        {
+            return;
+        }
+        
+        MoneyBalance -= forfeitPrice;
+    }
+
+    private void ConsiderationDetail(WorkOrder workOrder, Car car, Detail detail)
+    {
+        const ConsoleKey RepairDetailCommand = ConsoleKey.Y;
+
+        Console.WriteLine(
+            $"\nМеняем деталь: {detail.Name}?\nОтказ - штраф {OneDetailRefusalForfeit}\n Меняем - кнопка {RepairDetailCommand}/Отказ - любые другие кнопки:");
+
+        switch (Console.ReadKey().Key)
+        {
+            case RepairDetailCommand:
+                RepairDetail(workOrder, car, detail);
+                break;
+
+            default:
+                PayForfeit(OneDetailRefusalForfeit);
+                break;
+        }
+    }
+
+    private void RepairDetail(WorkOrder workOrder, Car car, Detail detail)
+    {
+        if (_storage.TryTakeDetail(detail.Name, out Detail newDetail))
+        {
+            car.ReplaceDetail(detail, newDetail);
+
+            int repairPrice = workOrder.GetRepairDetailPrice(detail);
+
+            IncreaseMoneyBalance(repairPrice);
+
+            Console.WriteLine($"Поменяна деталь: {detail.Name}. Зачислено на баланс: {repairPrice}");
+        }
+        else
+        {
+            PayForfeit(OneDetailRefusalForfeit);
+        }
+    }
+
+    private void IncreaseMoneyBalance(int cash)
+    {
+        if (cash <= 0)
+        {
+            return;
+        }
+        
+        MoneyBalance += cash;
+    }
+
+    public void ShowStorage()
+    {
+        _storage.ShowCells();
+
+        Console.ReadLine();
+    }
+}
+
+public class Game
+{
+    private CarFactory _carFactory = new CarFactory();
+    private AutoService _autoService = new AutoService();
+    private bool _isPlay = true;
+
+    public void Play()
+    {
+        while (_isPlay && _autoService.MoneyBalance >= 0)
+        {
+            Console.Clear();
+            Console.WriteLine($"Баланс автосервиса: {_autoService.MoneyBalance}\n");
+
+            ManageService();
+        }
+
+        ShowResult();
+    }
+
+    private void ShowResult()
+    {
+        if (_autoService.MoneyBalance < 0)
+        {
+            Console.WriteLine("Автосервис - банкрот!");
+        }
+
+        Console.WriteLine("Game Over");
+        Console.ReadLine();
+    }
+
+    private void ManageService()
+    {
+        const ConsoleKey ExitCommand = ConsoleKey.E;
+        const ConsoleKey TakeCarToWorkCommand = ConsoleKey.T;
+        const ConsoleKey ShowStorageCommand = ConsoleKey.R;
+
+        Console.WriteLine(
+            $"выход - {ExitCommand}\nвзять машину в работу - {TakeCarToWorkCommand}\nпомотреть склад деталей - {ShowStorageCommand}");
+
+        switch (Console.ReadKey().Key)
+        {
+            case ExitCommand:
+                _isPlay = false;
+                break;
+
+            case TakeCarToWorkCommand:
+                _autoService.WorkOnCar(_carFactory.CreateCar());
+                break;
+
+            case ShowStorageCommand:
+                _autoService.ShowStorage();
+                break;
+        }
+    }
+}
+
+public static class UserUtils
+{
+    private static Random s_random = new Random();
+
+    public static int GenerateRandomNumber(int min, int max)
+    {
+        return s_random.Next(min, max);
+    }
+}
+
+public enum DetailTypes
+{
+    Пружины,
+    Амортизаторы,
+    ПоворотныйКулак,
+    СтупичныйПодшипник,
+    СтойкаСтабилизатора,
+    РычагПодвески,
+    ТормозныеКолодки
+}
