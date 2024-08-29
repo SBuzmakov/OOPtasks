@@ -1,0 +1,116 @@
+namespace LINQ4_Military;
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        SoldiersAccaunting soldiersAccaunting = new SoldiersAccaunting();
+
+        soldiersAccaunting.Work();
+    }
+}
+
+public class Soldier
+{
+    public Soldier(string name)
+    {
+        Name = name;
+    }
+
+    public string Name { get; }
+
+    public void ShowInfo()
+    {
+        Console.WriteLine($"{Name}");
+    }
+}
+
+public class SoldiersRegistry
+{
+    private List<Soldier> _soldiersPlatoon1;
+    private List<Soldier> _soldiersPlatoon2 = new List<Soldier>();
+
+    public SoldiersRegistry()
+    {
+        _soldiersPlatoon1 = new List<Soldier>()
+        {
+            new Soldier("Абакунчик"),
+            new Soldier("Акуненко"),
+            new Soldier("Боев"),
+            new Soldier("Бузмаков"),
+            new Soldier("Виноградов"),
+            new Soldier("Григорьев"),
+            new Soldier("Дуров"),
+            new Soldier("Карпов"),
+            new Soldier("Терешков"),
+        };
+    }
+
+    public List<Soldier> Soldiers1 => _soldiersPlatoon1.ToList();
+    public List<Soldier> Soldiers2 => _soldiersPlatoon2.ToList();
+
+    public void TransferSoldier(Soldier soldier)
+    {
+        if (soldier == null)
+        {
+            Console.WriteLine("error");
+            return;
+        }
+        
+        _soldiersPlatoon2.Add(soldier);
+
+        _soldiersPlatoon1.Remove(soldier);
+    }
+}
+
+public class SoldiersAccaunting
+{
+    private SoldiersRegistry _soldiersRegistry = new SoldiersRegistry();
+
+    public void Work()
+    {
+        ShowSoldiers(_soldiersRegistry.Soldiers1);
+
+        Console.ReadLine();
+        
+        List<Soldier> soldiersStartsWithB = SortSoldiersByLetter('Б', _soldiersRegistry.Soldiers1);
+        
+        TransferSoldiers(soldiersStartsWithB);
+        
+        Console.Clear();
+        
+        Console.WriteLine("Взвод 1:");
+        
+        ShowSoldiers(_soldiersRegistry.Soldiers1);
+        
+        Console.WriteLine("\nВзвод 2:");
+        
+        ShowSoldiers(_soldiersRegistry.Soldiers2);
+    }
+
+    private void TransferSoldiers(List<Soldier> soldiers)
+    {
+        foreach (Soldier soldier in soldiers)
+        {
+            _soldiersRegistry.TransferSoldier(soldier);
+        }
+    }
+
+    private List<Soldier> SortSoldiersByLetter(char letter, List<Soldier> soldiers)
+    {
+        List<Soldier> sortedSoldiers = soldiers
+            .Where(soldier => soldier.Name.ToUpper().StartsWith(letter)).ToList();
+
+        return sortedSoldiers;
+    }
+
+    private void ShowSoldiers(List<Soldier> soldiers)
+    {
+        foreach (Soldier soldier in soldiers)
+        {
+            soldier.ShowInfo();
+        }
+
+        Console.ReadLine();
+    }
+}
